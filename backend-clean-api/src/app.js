@@ -1,14 +1,19 @@
 const express = require("express");
-
 const app = express();
 
-//Middleware để đọc JSON body
 app.use(express.json());
 
-//test endpoint
+// route test
+app.get("/", (req, res) => {
+    res.send("Task Management API is working");
+});
+
+// health check
 app.get("/health", (req, res) => {
-    res.json({ ok: true });
+    res.status(200).json({
+        status: "OK",
+        message: "Server is healthy"
+    });
 });
 
 module.exports = app;
-
