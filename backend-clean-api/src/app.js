@@ -16,4 +16,7 @@ app.get("/health", (req, res) => {
     });
 });
 
+const taskRoutes = require("./modules/tasks/task.route");
+
+app.use("/api/tasks", taskRoutes)
 module.exports = app;
