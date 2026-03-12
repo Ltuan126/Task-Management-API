@@ -1,5 +1,4 @@
 const taskService = require("./task.service");
-const taskController = require("./taskController");
 
 class TaskController {
     async createTask(req, res) {
