@@ -1,7 +1,7 @@
 const taskRepository = require("./task.repository");
 
 class TaskService {
-    async creataTask(data) {
+    async createTask(data) {
         return await taskRepository.createTask(data);
     }
 
