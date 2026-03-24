@@ -17,6 +17,8 @@ app.get("/health", (req, res) => {
 });
 
 const taskRoutes = require("./modules/tasks/task.route");
+const authRoutes = require("./modules/auth/auth.route");
 
-app.use("/api/tasks", taskRoutes)
+app.use("/api/tasks", taskRoutes);
+app.use("/api/auth", authRoutes);
 module.exports = app;
