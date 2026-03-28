@@ -1,24 +1,24 @@
 const taskRepository = require("./task.repository");
 
 class TaskService {
-    async createTask(data) {
-        return await taskRepository.createTask(data);
+    async createTask(data, userId) {
+        return await taskRepository.createTask({ ...data, owner: userId });
     }
 
-    async getTasks() {
-        return await taskRepository.getAllTask();
+    async getTasks(userId) {
+        return await taskRepository.getAllTask(userId);
     }
 
-    async getTask(id) {
-        return await taskRepository.getTaskbyId(id);
+    async getTask(id, userId) {
+        return await taskRepository.getTaskbyId(id, userId);
     }
 
-    async updateTask(id, data) {
-        return await taskRepository.updateTask(id, data);
+    async updateTask(id, data, userId) {
+        return await taskRepository.updateTask(id, data, userId);
     }
 
-    async deleteTask(id) {
-        return await taskRepository.deleteTask(id);
+    async deleteTask(id, userId) {
+        return await taskRepository.deleteTask(id, userId);
     }
 
 }

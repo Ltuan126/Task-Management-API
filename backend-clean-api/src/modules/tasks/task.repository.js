@@ -5,20 +5,24 @@ class TaskRepository {
         return await Task.create(data);
     }
 
-    async getAllTask(data) {
-        return await Task.find();
+    async getAllTask(userId) {
+        return await Task.find({ owner: userId });
     }
 
-    async getTaskbyId(id) {
-        return await Task.findById(id);
+    async getTaskbyId(id, userId) {
+        return await Task.findOne({ _id: id, owner: userId });
     }
 
-    async updateTask(id, data) {
-        return await Task.findByIdAndUpdate(id, data, { new: true });
+    async updateTask(id, data, userId) {
+        return await Task.findOneAndUpdate(
+            { _id: id, owner: userId },
+            data,
+            { new: true }
+        );
     }
 
-    async deleteTask(id) {
-        return await Task.findByIdAndDelete(id);
+    async deleteTask(id, userId) {
+        return await Task.findOneAndDelete({ _id: id, owner: userId });
     }
 }
 

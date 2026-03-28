@@ -14,7 +14,8 @@ const handleTaskError = (res, error) => {
 class TaskController {
     async createTask(req, res) {
         try {
-            const task = await taskService.createTask(req.body);
+            const userId = req.user.id;
+            const task = await taskService.createTask(req.body, userId);
             return res.status(201).json(task);
         } catch (error) {
             return handleTaskError(res, error);
@@ -23,7 +24,8 @@ class TaskController {
 
     async getTasks(req, res) {
         try {
-            const tasks = await taskService.getTasks();
+            const userId = req.user.id;
+            const tasks = await taskService.getTasks(userId);
             return res.json(tasks);
         } catch (error) {
             return handleTaskError(res, error);
@@ -36,7 +38,8 @@ class TaskController {
                 return res.status(400).json({ message: "Invalid task id" });
             }
 
-            const task = await taskService.getTask(req.params.id);
+            const userId = req.user.id;
+            const task = await taskService.getTask(req.params.id, userId);
 
             if (!task) {
                 return res.status(404).json({ message: "Task not found" });
@@ -54,7 +57,8 @@ class TaskController {
                 return res.status(400).json({ message: "Invalid task id" });
             }
 
-            const task = await taskService.updateTask(req.params.id, req.body);
+            const userId = req.user.id;
+            const task = await taskService.updateTask(req.params.id, req.body, userId);
 
             if (!task) {
                 return res.status(404).json({ message: "Task not found" });
@@ -72,7 +76,8 @@ class TaskController {
                 return res.status(400).json({ message: "Invalid task id" });
             }
 
-            const task = await taskService.deleteTask(req.params.id);
+            const userId = req.user.id;
+            const task = await taskService.deleteTask(req.params.id, userId);
 
             if (!task) {
                 return res.status(404).json({ message: "Task not found" });
