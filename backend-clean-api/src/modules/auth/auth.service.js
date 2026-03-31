@@ -1,11 +1,21 @@
 const jwt = require("jsonwebtoken");
 const authRepository = require("./auth.repository");
 
+const getJwtSecret = () => {
+    if (!process.env.JWT_SECRET) {
+        const error = new Error("JWT_SECRET is not configured");
+        error.statusCode = 500;
+        throw error;
+    }
+
+    return process.env.JWT_SECRET;
+};
+
 class AuthService {
     generateToken(userId) {
         return jwt.sign(
             { userId },
-            process.env.JWT_SECRET || "dev_jwt_secret_change_me",
+            getJwtSecret(),
             { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
         );
     }
