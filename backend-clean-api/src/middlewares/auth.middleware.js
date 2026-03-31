@@ -1,5 +1,13 @@
 const jwt = require("jsonwebtoken");
 
+const getJwtSecret = () => {
+    if (!process.env.JWT_SECRET) {
+        throw new Error("JWT_SECRET is not configured");
+    }
+
+    return process.env.JWT_SECRET;
+};
+
 const authMiddleware = (req, res, next) => {
     try {
         // Lấy token từ header Authorization: Bearer <token>
@@ -17,7 +25,7 @@ const authMiddleware = (req, res, next) => {
         // Verify JWT
         const decoded = jwt.verify(
             token,
-            process.env.JWT_SECRET || "dev_jwt_secret_change_me"
+            getJwtSecret()
         );
 
         // Gắn user info vào request
@@ -27,6 +35,12 @@ const authMiddleware = (req, res, next) => {
 
         next();
     } catch (error) {
+        if (error.message === "JWT_SECRET is not configured") {
+            return res.status(500).json({
+                message: "Server misconfiguration",
+            });
+        }
+
         if (error.name === "TokenExpiredError") {
             return res.status(401).json({
                 message: "Token expired",
