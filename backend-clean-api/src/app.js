@@ -1,5 +1,6 @@
 const express = require("express");
 const app = express();
+const { swaggerSpec, swaggerMiddleware } = require("./config/swagger");
 
 app.use(express.json());
 
@@ -15,6 +16,12 @@ app.get("/health", (req, res) => {
         message: "Server is healthy"
     });
 });
+
+app.get("/api-docs.json", (req, res) => {
+    res.status(200).json(swaggerSpec);
+});
+
+app.use("/api-docs", ...swaggerMiddleware);
 
 const taskRoutes = require("./modules/tasks/task.route");
 const authRoutes = require("./modules/auth/auth.route");
