@@ -5,8 +5,48 @@ class TaskRepository {
         return await Task.create(data);
     }
 
-    async getAllTask(userId) {
-        return await Task.find({ owner: userId });
+    async getAllTask(userId, options = {}) {
+        const {
+            page = 1,
+            limit = 10,
+            status,
+            q,
+            sortBy = "createdAt",
+            sortOrder = "desc",
+        } = options;
+
+        const filter = { owner: userId };
+
+        if (status) {
+            filter.status = status;
+        }
+
+        if (q) {
+            filter.$or = [
+                { title: { $regex: q, $options: "i" } },
+                { description: { $regex: q, $options: "i" } },
+            ];
+        }
+
+        const skip = (page - 1) * limit;
+        const sort = {
+            [sortBy]: sortOrder === "asc" ? 1 : -1,
+        };
+
+        const [items, total] = await Promise.all([
+            Task.find(filter).sort(sort).skip(skip).limit(limit),
+            Task.countDocuments(filter),
+        ]);
+
+        return {
+            items,
+            pagination: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit) || 1,
+            },
+        };
     }
 
     async getTaskbyId(id, userId) {

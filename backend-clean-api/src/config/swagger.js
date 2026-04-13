@@ -75,6 +75,24 @@ const swaggerSpec = {
                     updatedAt: { type: "string", format: "date-time" },
                 },
             },
+            TaskListResponse: {
+                type: "object",
+                properties: {
+                    items: {
+                        type: "array",
+                        items: { $ref: "#/components/schemas/Task" },
+                    },
+                    pagination: {
+                        type: "object",
+                        properties: {
+                            total: { type: "integer", example: 12 },
+                            page: { type: "integer", example: 1 },
+                            limit: { type: "integer", example: 10 },
+                            totalPages: { type: "integer", example: 2 },
+                        },
+                    },
+                },
+            },
             TaskCreateRequest: {
                 type: "object",
                 required: ["title"],
@@ -232,15 +250,63 @@ const swaggerSpec = {
                 tags: ["Tasks"],
                 summary: "Get all tasks of current user",
                 security: [{ bearerAuth: [] }],
+                parameters: [
+                    {
+                        in: "query",
+                        name: "page",
+                        required: false,
+                        schema: { type: "integer", minimum: 1, example: 1 },
+                        description: "Page number (default: 1)",
+                    },
+                    {
+                        in: "query",
+                        name: "limit",
+                        required: false,
+                        schema: { type: "integer", minimum: 1, maximum: 100, example: 10 },
+                        description: "Page size (default: 10, max: 100)",
+                    },
+                    {
+                        in: "query",
+                        name: "status",
+                        required: false,
+                        schema: {
+                            type: "string",
+                            enum: ["pending", "in-progress", "completed"],
+                        },
+                        description: "Filter by status",
+                    },
+                    {
+                        in: "query",
+                        name: "q",
+                        required: false,
+                        schema: { type: "string", example: "demo" },
+                        description: "Search by title or description",
+                    },
+                    {
+                        in: "query",
+                        name: "sortBy",
+                        required: false,
+                        schema: {
+                            type: "string",
+                            enum: ["createdAt", "updatedAt", "title", "status"],
+                            example: "createdAt",
+                        },
+                        description: "Sort field",
+                    },
+                    {
+                        in: "query",
+                        name: "sortOrder",
+                        required: false,
+                        schema: { type: "string", enum: ["asc", "desc"], example: "desc" },
+                        description: "Sort direction",
+                    },
+                ],
                 responses: {
                     200: {
                         description: "Task list",
                         content: {
                             "application/json": {
-                                schema: {
-                                    type: "array",
-                                    items: { $ref: "#/components/schemas/Task" },
-                                },
+                                schema: { $ref: "#/components/schemas/TaskListResponse" },
                             },
                         },
                     },

@@ -74,4 +74,49 @@ describe("Task ownership", () => {
 
         process.env.JWT_SECRET = originalJwtSecret;
     });
+
+    it("supports pagination, filtering, and sorting for current user", async () => {
+        const registerResponse = await request(app).post("/api/auth/register").send({
+            name: "Query User",
+            email: "query@example.com",
+            password: "secret123",
+        });
+
+        const token = registerResponse.body.token;
+
+        await request(app)
+            .post("/api/tasks")
+            .set("Authorization", `Bearer ${token}`)
+            .send({ title: "Bravo", description: "alpha contains" });
+
+        await request(app)
+            .post("/api/tasks")
+            .set("Authorization", `Bearer ${token}`)
+            .send({ title: "Alpha", description: "alpha keyword" });
+
+        await request(app)
+            .post("/api/tasks")
+            .set("Authorization", `Bearer ${token}`)
+            .send({ title: "Charlie", status: "completed" });
+
+        const response = await request(app)
+            .get("/api/tasks")
+            .set("Authorization", `Bearer ${token}`)
+            .query({
+                q: "alpha",
+                sortBy: "title",
+                sortOrder: "asc",
+                page: 1,
+                limit: 1,
+            });
+
+        expect(response.status).toBe(200);
+        expect(Array.isArray(response.body.items)).toBe(true);
+        expect(response.body.items).toHaveLength(1);
+        expect(response.body.items[0].title).toBe("Alpha");
+        expect(response.body.pagination.total).toBe(2);
+        expect(response.body.pagination.page).toBe(1);
+        expect(response.body.pagination.limit).toBe(1);
+        expect(response.body.pagination.totalPages).toBe(2);
+    });
 });
