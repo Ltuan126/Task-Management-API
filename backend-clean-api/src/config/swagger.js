@@ -298,6 +298,30 @@ const swaggerSpec = {
                     },
                     {
                         in: "query",
+                        name: "priority",
+                        required: false,
+                        schema: {
+                            type: "string",
+                            enum: ["low", "medium", "high"],
+                        },
+                        description: "Filter by priority",
+                    },
+                    {
+                        in: "query",
+                        name: "dueDateFrom",
+                        required: false,
+                        schema: { type: "string", format: "date-time", example: "2026-04-01T00:00:00.000Z" },
+                        description: "Filter tasks due on or after this date",
+                    },
+                    {
+                        in: "query",
+                        name: "dueDateTo",
+                        required: false,
+                        schema: { type: "string", format: "date-time", example: "2026-04-30T23:59:59.999Z" },
+                        description: "Filter tasks due on or before this date",
+                    },
+                    {
+                        in: "query",
                         name: "q",
                         required: false,
                         schema: { type: "string", example: "demo" },
@@ -309,8 +333,8 @@ const swaggerSpec = {
                         required: false,
                         schema: {
                             type: "string",
-                            enum: ["createdAt", "updatedAt", "title", "status"],
-                            example: "createdAt",
+                            enum: ["createdAt", "updatedAt", "title", "status", "dueDate"],
+                            example: "dueDate",
                         },
                         description: "Sort field",
                     },
