@@ -65,6 +65,13 @@ const swaggerSpec = {
                     _id: { type: "string", example: "67f4a67ca8ab0dcf8a3e4f22" },
                     title: { type: "string", example: "Prepare API demo" },
                     description: { type: "string", example: "Show login and CRUD flow" },
+                    dueDate: { type: "string", format: "date-time", example: "2026-04-30T10:00:00.000Z" },
+                    priority: { type: "string", enum: ["low", "medium", "high"], example: "medium" },
+                    tags: {
+                        type: "array",
+                        items: { type: "string" },
+                        example: ["api", "demo"],
+                    },
                     status: {
                         type: "string",
                         enum: ["pending", "in-progress", "completed"],
@@ -99,6 +106,13 @@ const swaggerSpec = {
                 properties: {
                     title: { type: "string", example: "Prepare API demo" },
                     description: { type: "string", example: "Show login and CRUD flow" },
+                    dueDate: { type: "string", format: "date-time", example: "2026-04-30T10:00:00.000Z" },
+                    priority: { type: "string", enum: ["low", "medium", "high"], example: "medium" },
+                    tags: {
+                        type: "array",
+                        items: { type: "string" },
+                        example: ["api", "demo"],
+                    },
                     status: {
                         type: "string",
                         enum: ["pending", "in-progress", "completed"],
@@ -111,6 +125,13 @@ const swaggerSpec = {
                 properties: {
                     title: { type: "string", example: "Updated title" },
                     description: { type: "string", example: "Updated description" },
+                    dueDate: { type: "string", format: "date-time", example: "2026-04-30T10:00:00.000Z" },
+                    priority: { type: "string", enum: ["low", "medium", "high"], example: "high" },
+                    tags: {
+                        type: "array",
+                        items: { type: "string" },
+                        example: ["urgent", "frontend"],
+                    },
                     status: {
                         type: "string",
                         enum: ["pending", "in-progress", "completed"],

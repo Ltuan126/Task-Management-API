@@ -119,4 +119,40 @@ describe("Task ownership", () => {
         expect(response.body.pagination.limit).toBe(1);
         expect(response.body.pagination.totalPages).toBe(2);
     });
+
+    it("stores and returns dueDate, priority, and tags on tasks", async () => {
+        const registerResponse = await request(app).post("/api/auth/register").send({
+            name: "Metadata User",
+            email: "metadata@example.com",
+            password: "secret123",
+        });
+
+        const token = registerResponse.body.token;
+        const dueDate = "2026-04-30T10:00:00.000Z";
+
+        const createResponse = await request(app)
+            .post("/api/tasks")
+            .set("Authorization", `Bearer ${token}`)
+            .send({
+                title: "Task with metadata",
+                description: "Check extra fields",
+                dueDate,
+                priority: "high",
+                tags: ["stage3", "metadata"],
+            });
+
+        expect(createResponse.status).toBe(201);
+        expect(createResponse.body.priority).toBe("high");
+        expect(createResponse.body.tags).toEqual(["stage3", "metadata"]);
+        expect(new Date(createResponse.body.dueDate).toISOString()).toBe(dueDate);
+
+        const listResponse = await request(app)
+            .get("/api/tasks")
+            .set("Authorization", `Bearer ${token}`);
+
+        expect(listResponse.status).toBe(200);
+        expect(listResponse.body.items).toHaveLength(1);
+        expect(listResponse.body.items[0].priority).toBe("high");
+        expect(listResponse.body.items[0].tags).toEqual(["stage3", "metadata"]);
+    });
 });

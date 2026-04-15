@@ -12,6 +12,21 @@ const taskSchema = new mongoose.Schema(
             type: String
         },
 
+        dueDate: {
+            type: Date
+        },
+
+        priority: {
+            type: String,
+            enum: ["low", "medium", "high"],
+            default: "medium"
+        },
+
+        tags: {
+            type: [String],
+            default: []
+        },
+
         status: {
             type: String,
             enum: ["pending", "in-progress", "completed"],
@@ -28,5 +43,10 @@ const taskSchema = new mongoose.Schema(
         timestamps: true
     }
 );
+
+taskSchema.index({ owner: 1, status: 1, createdAt: -1 });
+taskSchema.index({ owner: 1, dueDate: 1 });
+taskSchema.index({ owner: 1, priority: 1 });
+taskSchema.index({ owner: 1, tags: 1 });
 
 module.exports = mongoose.model("Task", taskSchema);
