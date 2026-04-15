@@ -9,7 +9,20 @@ const toPositiveInt = (value, fallback) => {
     return parsed;
 };
 
-const ALLOWED_SORT_FIELDS = new Set(["createdAt", "updatedAt", "title", "status"]);
+const ALLOWED_SORT_FIELDS = new Set(["createdAt", "updatedAt", "title", "status", "dueDate"]);
+
+const parseDateOrNull = (value) => {
+    if (typeof value !== "string" || !value.trim()) {
+        return null;
+    }
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+        return null;
+    }
+
+    return parsed;
+};
 
 class TaskService {
     async createTask(data, userId) {
@@ -20,7 +33,10 @@ class TaskService {
         const page = toPositiveInt(query.page, 1);
         const limit = Math.min(toPositiveInt(query.limit, 10), 100);
         const status = query.status;
+        const priority = query.priority;
         const q = typeof query.q === "string" ? query.q.trim() : "";
+        const dueDateFrom = parseDateOrNull(query.dueDateFrom);
+        const dueDateTo = parseDateOrNull(query.dueDateTo);
 
         const sortBy = ALLOWED_SORT_FIELDS.has(query.sortBy)
             ? query.sortBy
@@ -31,7 +47,10 @@ class TaskService {
             page,
             limit,
             status,
+            priority,
             q,
+            dueDateFrom,
+            dueDateTo,
             sortBy,
             sortOrder,
         });

@@ -10,7 +10,10 @@ class TaskRepository {
             page = 1,
             limit = 10,
             status,
+            priority,
             q,
+            dueDateFrom,
+            dueDateTo,
             sortBy = "createdAt",
             sortOrder = "desc",
         } = options;
@@ -21,11 +24,31 @@ class TaskRepository {
             filter.status = status;
         }
 
+        if (priority) {
+            filter.priority = priority;
+        }
+
         if (q) {
             filter.$or = [
                 { title: { $regex: q, $options: "i" } },
                 { description: { $regex: q, $options: "i" } },
             ];
+        }
+
+        if (dueDateFrom || dueDateTo) {
+            filter.dueDate = {};
+
+            if (dueDateFrom) {
+                filter.dueDate.$gte = dueDateFrom;
+            }
+
+            if (dueDateTo) {
+                filter.dueDate.$lte = dueDateTo;
+            }
+
+            if (Object.keys(filter.dueDate).length === 0) {
+                delete filter.dueDate;
+            }
         }
 
         const skip = (page - 1) * limit;
