@@ -155,4 +155,55 @@ describe("Task ownership", () => {
         expect(listResponse.body.items[0].priority).toBe("high");
         expect(listResponse.body.items[0].tags).toEqual(["stage3", "metadata"]);
     });
+
+    it("filters tasks by priority and due date range", async () => {
+        const registerResponse = await request(app).post("/api/auth/register").send({
+            name: "Filter User",
+            email: "filter@example.com",
+            password: "secret123",
+        });
+
+        const token = registerResponse.body.token;
+
+        await request(app)
+            .post("/api/tasks")
+            .set("Authorization", `Bearer ${token}`)
+            .send({
+                title: "Low priority task",
+                priority: "low",
+                dueDate: "2026-04-05T00:00:00.000Z",
+            });
+
+        await request(app)
+            .post("/api/tasks")
+            .set("Authorization", `Bearer ${token}`)
+            .send({
+                title: "High priority task",
+                priority: "high",
+                dueDate: "2026-04-20T00:00:00.000Z",
+            });
+
+        const priorityResponse = await request(app)
+            .get("/api/tasks")
+            .set("Authorization", `Bearer ${token}`)
+            .query({ priority: "high", sortBy: "dueDate", sortOrder: "asc" });
+
+        expect(priorityResponse.status).toBe(200);
+        expect(priorityResponse.body.items).toHaveLength(1);
+        expect(priorityResponse.body.items[0].title).toBe("High priority task");
+
+        const dueDateResponse = await request(app)
+            .get("/api/tasks")
+            .set("Authorization", `Bearer ${token}`)
+            .query({
+                dueDateFrom: "2026-04-10T00:00:00.000Z",
+                dueDateTo: "2026-04-30T23:59:59.999Z",
+                sortBy: "dueDate",
+                sortOrder: "asc",
+            });
+
+        expect(dueDateResponse.status).toBe(200);
+        expect(dueDateResponse.body.items).toHaveLength(1);
+        expect(dueDateResponse.body.items[0].title).toBe("High priority task");
+    });
 });
