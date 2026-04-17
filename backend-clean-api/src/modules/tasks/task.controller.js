@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { validationResult } = require("express-validator");
 const taskService = require("./task.service");
 
 const isInvalidObjectId = (id) => !mongoose.Types.ObjectId.isValid(id);
@@ -11,9 +12,25 @@ const handleTaskError = (res, error) => {
     return res.status(500).json({ message: "Internal server error" });
 };
 
+const sendValidationErrors = (req, res) => {
+    const errors = validationResult(req);
+
+    if (errors.isEmpty()) {
+        return null;
+    }
+
+    return res.status(400).json({
+        message: "Validation failed",
+        errors: errors.array(),
+    });
+};
+
 class TaskController {
     async createTask(req, res) {
         try {
+            const validationResponse = sendValidationErrors(req, res);
+            if (validationResponse) return validationResponse;
+
             const userId = req.user.id;
             const task = await taskService.createTask(req.body, userId);
             return res.status(201).json(task);
@@ -24,6 +41,9 @@ class TaskController {
 
     async getTasks(req, res) {
         try {
+            const validationResponse = sendValidationErrors(req, res);
+            if (validationResponse) return validationResponse;
+
             const userId = req.user.id;
             const tasks = await taskService.getTasks(userId, req.query);
             return res.json(tasks);
@@ -53,6 +73,9 @@ class TaskController {
 
     async updateTask(req, res) {
         try {
+            const validationResponse = sendValidationErrors(req, res);
+            if (validationResponse) return validationResponse;
+
             if (isInvalidObjectId(req.params.id)) {
                 return res.status(400).json({ message: "Invalid task id" });
             }

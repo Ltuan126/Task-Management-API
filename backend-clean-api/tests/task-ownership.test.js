@@ -206,4 +206,45 @@ describe("Task ownership", () => {
         expect(dueDateResponse.body.items).toHaveLength(1);
         expect(dueDateResponse.body.items[0].title).toBe("High priority task");
     });
+
+    it("returns 400 for invalid task list query", async () => {
+        const registerResponse = await request(app).post("/api/auth/register").send({
+            name: "Invalid Query User",
+            email: "invalid-query@example.com",
+            password: "secret123",
+        });
+
+        const token = registerResponse.body.token;
+
+        const response = await request(app)
+            .get("/api/tasks")
+            .set("Authorization", `Bearer ${token}`)
+            .query({ priority: "urgent" });
+
+        expect(response.status).toBe(400);
+        expect(response.body.message).toBe("Validation failed");
+        expect(Array.isArray(response.body.errors)).toBe(true);
+    });
+
+    it("returns 400 for invalid task payload", async () => {
+        const registerResponse = await request(app).post("/api/auth/register").send({
+            name: "Invalid Payload User",
+            email: "invalid-payload@example.com",
+            password: "secret123",
+        });
+
+        const token = registerResponse.body.token;
+
+        const response = await request(app)
+            .post("/api/tasks")
+            .set("Authorization", `Bearer ${token}`)
+            .send({
+                title: "Invalid Payload",
+                dueDate: "not-a-date",
+            });
+
+        expect(response.status).toBe(400);
+        expect(response.body.message).toBe("Validation failed");
+        expect(Array.isArray(response.body.errors)).toBe(true);
+    });
 });
