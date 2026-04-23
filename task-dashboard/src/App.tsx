@@ -41,11 +41,14 @@ const createHeaders = (token: string) => ({
   Authorization: `Bearer ${token}`,
 });
 
-const cycleStatus = (status: Task["status"]): Task["status"] => {
-  if (status === "pending") return "in-progress";
-  if (status === "in-progress") return "completed";
-  return "pending";
-};
+const statusOptions: Array<{ value: Task["status"]; label: string }> = [
+  { value: "pending", label: "Pending" },
+  { value: "in-progress", label: "In Progress" },
+  { value: "completed", label: "Completed" },
+];
+
+const formatStatusLabel = (status: Task["status"]) =>
+  statusOptions.find((option) => option.value === status)?.label ?? status;
 
 function App() {
   const [token, setToken] = useState<string>(() => localStorage.getItem(TOKEN_KEY) || "");
@@ -82,6 +85,15 @@ function App() {
   const [successMessage, setSuccessMessage] = useState("");
 
   const totalPages = useMemo(() => Math.max(1, Math.ceil(totalTasks / pageSize)), [totalTasks, pageSize]);
+  const taskSummary = useMemo(
+    () => ({
+      visible: tasks.length,
+      pending: tasks.filter((task) => task.status === "pending").length,
+      inProgress: tasks.filter((task) => task.status === "in-progress").length,
+      completed: tasks.filter((task) => task.status === "completed").length,
+    }),
+    [tasks]
+  );
 
   useEffect(() => {
     if (!token) {
@@ -247,16 +259,14 @@ function App() {
     }
   };
 
-  const handleStatusChange = async (task: Task) => {
+  const handleStatusChange = async (task: Task, status: Task["status"]) => {
     if (!token) return;
-
-    const nextStatus = cycleStatus(task.status);
 
     try {
       const response = await fetch(`/api/tasks/${task._id}`, {
         method: "PUT",
         headers: createHeaders(token),
-        body: JSON.stringify({ status: nextStatus }),
+        body: JSON.stringify({ status }),
       });
 
       const data = (await response.json()) as Task & { message?: string };
@@ -268,7 +278,7 @@ function App() {
       setTasks((previous) =>
         previous.map((currentTask) => (currentTask._id === task._id ? data : currentTask))
       );
-      setSuccessMessage(`Task updated to ${nextStatus}`);
+      setSuccessMessage(`Task updated to ${formatStatusLabel(status)}`);
     } catch (error) {
       setErrorMessage((error as Error).message);
     }
@@ -346,11 +356,53 @@ function App() {
 
   return (
     <main className="dashboard-shell">
-      <header className="top-bar">
-        <div>
+      <section className="hero-panel">
+        <div className="hero-copy">
+          <p className="eyebrow">Task orchestration</p>
           <h1>Task Command Center</h1>
+          <p className="hero-lead">
+            A cleaner workspace to review ownership, adjust status, and keep priorities visible at a glance.
+          </p>
+        </div>
+
+        <div className="hero-stats" aria-label="Task summary">
+          <article className="stat-card stat-card--wide">
+            <span>Total tasks</span>
+            <strong>{totalTasks}</strong>
+            <small>Matching current filters</small>
+          </article>
+
+          <article className="stat-card">
+            <span>Visible</span>
+            <strong>{taskSummary.visible}</strong>
+            <small>On this page</small>
+          </article>
+
+          <article className="stat-card stat-card--subtle stat-card--pending">
+            <span>Pending</span>
+            <strong>{taskSummary.pending}</strong>
+            <small>Needs attention</small>
+          </article>
+
+          <article className="stat-card stat-card--subtle stat-card--progress">
+            <span>In progress</span>
+            <strong>{taskSummary.inProgress}</strong>
+            <small>Currently moving</small>
+          </article>
+
+          <article className="stat-card stat-card--subtle stat-card--done">
+            <span>Completed</span>
+            <strong>{taskSummary.completed}</strong>
+            <small>Recently closed</small>
+          </article>
+        </div>
+      </section>
+
+      <header className="top-bar">
+        <div className="top-bar-copy">
+          <p className="eyebrow">Workspace</p>
           <p>
-            Welcome back, <strong>{user.name}</strong>.
+            Welcome back, <strong>{user.name}</strong>. Your tasks are live, filtered, and ready to manage.
           </p>
         </div>
         <button className="secondary" type="button" onClick={handleLogout}>
@@ -470,10 +522,13 @@ function App() {
         ) : (
           <div className="task-grid">
             {tasks.map((task) => (
-              <article className="task-card" key={task._id}>
+              <article className={`task-card task-card--${task.status}`} key={task._id}>
                 <div className="task-title-row">
                   <h3>{task.title}</h3>
-                  <span className={`status ${task.status}`}>{task.status}</span>
+                  <div className="task-badges">
+                    <span className={`status ${task.status}`}>{formatStatusLabel(task.status)}</span>
+                    <span className={`priority priority-${task.priority}`}>{task.priority}</span>
+                  </div>
                 </div>
 
                 {task.description && <p>{task.description}</p>}
@@ -496,9 +551,19 @@ function App() {
                 )}
 
                 <div className="task-actions">
-                  <button type="button" onClick={() => handleStatusChange(task)}>
-                    Next Status
-                  </button>
+                  <label className="status-control">
+                    Status
+                    <select
+                      value={task.status}
+                      onChange={(event) => handleStatusChange(task, event.target.value as Task["status"])}
+                    >
+                      {statusOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                   <button className="danger" type="button" onClick={() => handleDeleteTask(task._id)}>
                     Delete
                   </button>
