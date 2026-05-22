@@ -36,8 +36,19 @@ type TaskListResponse = {
 const TOKEN_KEY = "task_dashboard_token";
 const USER_KEY = "task_dashboard_user";
 const DEFAULT_API_BASE_URL = "https://task-management-api-71ba.onrender.com";
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ?? DEFAULT_API_BASE_URL;
+const normalizeApiBaseUrl = (value?: string) => {
+  if (!value?.trim()) {
+    return DEFAULT_API_BASE_URL;
+  }
+
+  try {
+    return new URL(value.trim()).origin;
+  } catch {
+    return value.trim().replace(/\/$/, "");
+  }
+};
+
+const API_BASE_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL);
 
 const apiPath = (path: string) => `${API_BASE_URL}${path}`;
 
