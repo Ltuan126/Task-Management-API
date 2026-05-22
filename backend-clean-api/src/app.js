@@ -1,6 +1,14 @@
 const express = require("express");
 const app = express();
 const { swaggerSpec, swaggerMiddleware } = require("./config/swagger");
+const cors = require("cors");
+
+app.use(cors({
+    origin: process.env.FRONTEND_URL || "*",
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+}));
+
 
 app.use(express.json());
 
