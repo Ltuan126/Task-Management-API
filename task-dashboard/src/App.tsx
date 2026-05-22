@@ -35,6 +35,9 @@ type TaskListResponse = {
 
 const TOKEN_KEY = "task_dashboard_token";
 const USER_KEY = "task_dashboard_user";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ?? "https://task-management-api-71ba.onrender.com";
+
+const apiPath = (path: string) => `${API_BASE_URL}${path}`;
 
 const createHeaders = (token: string) => ({
   "Content-Type": "application/json",
@@ -122,7 +125,7 @@ function App() {
         if (dueDateFrom) params.set("dueDateFrom", new Date(dueDateFrom).toISOString());
         if (dueDateTo) params.set("dueDateTo", new Date(dueDateTo).toISOString());
 
-        const response = await fetch(`/api/tasks?${params.toString()}`, {
+        const response = await fetch(apiPath(`/api/tasks?${params.toString()}`), {
           method: "GET",
           headers: createHeaders(token),
           signal: controller.signal,
@@ -156,7 +159,7 @@ function App() {
     setErrorMessage("");
     setSuccessMessage("");
 
-    const endpoint = isRegisterMode ? "/api/auth/register" : "/api/auth/login";
+    const endpoint = isRegisterMode ? apiPath("/api/auth/register") : apiPath("/api/auth/login");
     const payload = isRegisterMode
       ? { name: name.trim(), email: email.trim(), password }
       : { email: email.trim(), password };
@@ -210,7 +213,7 @@ function App() {
           .filter(Boolean),
       };
 
-      const response = await fetch("/api/tasks", {
+      const response = await fetch(apiPath("/api/tasks"), {
         method: "POST",
         headers: createHeaders(token),
         body: JSON.stringify(payload),
@@ -240,7 +243,7 @@ function App() {
     if (!token) return;
 
     try {
-      const response = await fetch(`/api/tasks/${taskId}`, {
+      const response = await fetch(apiPath(`/api/tasks/${taskId}`), {
         method: "DELETE",
         headers: createHeaders(token),
       });
@@ -263,7 +266,7 @@ function App() {
     if (!token) return;
 
     try {
-      const response = await fetch(`/api/tasks/${task._id}`, {
+      const response = await fetch(apiPath(`/api/tasks/${task._id}`), {
         method: "PUT",
         headers: createHeaders(token),
         body: JSON.stringify({ status }),
