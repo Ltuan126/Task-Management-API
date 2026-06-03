@@ -1,8 +1,12 @@
 const express = require("express");
 const { body } = require("express-validator");
 const authController = require("./auth.controller");
+const { authLimiter } = require("../../middlewares/rate-limit.middleware");
 
 const router = express.Router();
+
+// Apply rate limiting to all auth routes
+router.use(authLimiter);
 
 const registerValidation = [
     body("name").trim().notEmpty().withMessage("Name is required"),
