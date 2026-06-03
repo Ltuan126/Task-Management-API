@@ -4,6 +4,7 @@ const { MongoMemoryServer } = require("mongodb-memory-server");
 
 process.env.JWT_SECRET = "test_jwt_secret";
 process.env.JWT_EXPIRES_IN = "1h";
+process.env.NODE_ENV = "test";
 
 const app = require("../src/app");
 
@@ -246,5 +247,70 @@ describe("Task ownership", () => {
         expect(response.status).toBe(400);
         expect(response.body.message).toBe("Validation failed");
         expect(Array.isArray(response.body.errors)).toBe(true);
+    });
+
+    it("cannot overwrite task owner via update payload", async () => {
+        const ownerRes = await request(app).post("/api/auth/register").send({
+            name: "Real Owner",
+            email: "realowner@example.com",
+            password: "secret123",
+        });
+
+        const attackerRes = await request(app).post("/api/auth/register").send({
+            name: "Attacker",
+            email: "attacker@example.com",
+            password: "secret123",
+        });
+
+        const ownerToken = ownerRes.body.token;
+        const attackerId = attackerRes.body.user.id;
+
+        // Owner creates a task
+        const createRes = await request(app)
+            .post("/api/tasks")
+            .set("Authorization", `Bearer ${ownerToken}`)
+            .send({ title: "Owned Task" });
+
+        expect(createRes.status).toBe(201);
+        const taskId = createRes.body._id;
+        const originalOwner = createRes.body.owner;
+
+        // Owner tries to send owner field in update body (mass assignment attempt)
+        const updateRes = await request(app)
+            .put(`/api/tasks/${taskId}`)
+            .set("Authorization", `Bearer ${ownerToken}`)
+            .send({ title: "Updated Title", owner: attackerId });
+
+        expect(updateRes.status).toBe(200);
+        expect(updateRes.body.title).toBe("Updated Title");
+        // owner must remain unchanged
+        expect(String(updateRes.body.owner)).toBe(String(originalOwner));
+    });
+
+    it("successfully updates allowed task fields", async () => {
+        const userRes = await request(app).post("/api/auth/register").send({
+            name: "Update User",
+            email: "updateuser@example.com",
+            password: "secret123",
+        });
+
+        const token = userRes.body.token;
+
+        const createRes = await request(app)
+            .post("/api/tasks")
+            .set("Authorization", `Bearer ${token}`)
+            .send({ title: "Original Title", priority: "low" });
+
+        expect(createRes.status).toBe(201);
+
+        const updateRes = await request(app)
+            .put(`/api/tasks/${createRes.body._id}`)
+            .set("Authorization", `Bearer ${token}`)
+            .send({ title: "New Title", priority: "high", status: "in-progress" });
+
+        expect(updateRes.status).toBe(200);
+        expect(updateRes.body.title).toBe("New Title");
+        expect(updateRes.body.priority).toBe("high");
+        expect(updateRes.body.status).toBe("in-progress");
     });
 });
