@@ -1,5 +1,9 @@
 const Task = require("../../models/task.model");
 
+// Fields that clients are permitted to update.
+// Any other fields in the request body (e.g. owner, _id) are silently ignored.
+const UPDATABLE_FIELDS = ["title", "description", "status", "priority", "dueDate", "tags"];
+
 class TaskRepository {
     async createTask(data) {
         return await Task.create(data);
@@ -77,10 +81,15 @@ class TaskRepository {
     }
 
     async updateTask(id, data, userId) {
+        // Only pick explicitly allowed fields — protects against mass assignment attacks
+        const safeData = Object.fromEntries(
+            Object.entries(data).filter(([key]) => UPDATABLE_FIELDS.includes(key))
+        );
+
         return await Task.findOneAndUpdate(
             { _id: id, owner: userId },
-            data,
-            { new: true }
+            safeData,
+            { returnDocument: "after", runValidators: true }
         );
     }
 
@@ -90,3 +99,4 @@ class TaskRepository {
 }
 
 module.exports = new TaskRepository();
+
