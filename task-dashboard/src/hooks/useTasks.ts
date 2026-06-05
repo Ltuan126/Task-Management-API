@@ -1,8 +1,18 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { apiPath, createHeaders } from "../lib/api";
 import { formatStatusLabel } from "../types";
 import type { Task, TaskListResponse } from "../types";
+import { useDebounce } from "./useDebounce";
+
+type TaskStats = {
+  total: number;
+  pending: number;
+  inProgress: number;
+  completed: number;
+};
+
+const EMPTY_STATS: TaskStats = { total: 0, pending: 0, inProgress: 0, completed: 0 };
 
 export function useTasks(token: string, onTokenExpired?: () => void) {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -27,22 +37,41 @@ export function useTasks(token: string, onTokenExpired?: () => void) {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
+  // Global stats (unaffected by current page filters)
+  const [stats, setStats] = useState<TaskStats>(EMPTY_STATS);
+  const [statsVersion, setStatsVersion] = useState(0);
+  const bumpStats = useCallback(() => setStatsVersion((v) => v + 1), []);
+
+  // Debounce search so we don't fire an API call on every keystroke
+  const debouncedSearch = useDebounce(search, 300);
+
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil(totalTasks / pageSize)),
     [totalTasks, pageSize]
   );
 
-  const taskSummary = useMemo(
-    () => ({
-      visible: tasks.length,
-      pending: tasks.filter((t) => t.status === "pending").length,
-      inProgress: tasks.filter((t) => t.status === "in-progress").length,
-      completed: tasks.filter((t) => t.status === "completed").length,
-    }),
-    [tasks]
-  );
+  // ─── Fetch global stats ──────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!token) {
+      setStats(EMPTY_STATS);
+      return;
+    }
 
-  // Fetch tasks whenever token or any filter/pagination value changes
+    let cancelled = false;
+
+    fetch(apiPath("/api/tasks/stats"), { headers: createHeaders(token) })
+      .then((r) => r.json())
+      .then((data: TaskStats) => {
+        if (!cancelled) setStats(data);
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token, statsVersion]);
+
+  // ─── Fetch task list ─────────────────────────────────────────────────────────
   useEffect(() => {
     if (!token) {
       setTasks([]);
@@ -64,7 +93,7 @@ export function useTasks(token: string, onTokenExpired?: () => void) {
           sortOrder,
         });
 
-        if (search.trim()) params.set("q", search.trim());
+        if (debouncedSearch.trim()) params.set("q", debouncedSearch.trim());
         if (statusFilter !== "all") params.set("status", statusFilter);
         if (priorityFilter !== "all") params.set("priority", priorityFilter);
         if (dueDateFrom) params.set("dueDateFrom", new Date(dueDateFrom).toISOString());
@@ -100,7 +129,14 @@ export function useTasks(token: string, onTokenExpired?: () => void) {
     fetchTasks();
 
     return () => controller.abort();
-  }, [token, page, pageSize, statusFilter, priorityFilter, search, sortBy, sortOrder, dueDateFrom, dueDateTo, onTokenExpired]);
+  }, [token, page, pageSize, statusFilter, priorityFilter, debouncedSearch, sortBy, sortOrder, dueDateFrom, dueDateTo, onTokenExpired]);
+
+  // Reset to page 1 when search changes so results are consistent
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, statusFilter, priorityFilter, sortBy, sortOrder, dueDateFrom, dueDateTo]);
+
+  // ─── Handlers ────────────────────────────────────────────────────────────────
 
   const handleCreateTask = async (event: FormEvent) => {
     event.preventDefault();
@@ -142,6 +178,7 @@ export function useTasks(token: string, onTokenExpired?: () => void) {
       setPage(1);
       setTasks((previous) => [data, ...previous].slice(0, pageSize));
       setTotalTasks((previous) => previous + 1);
+      bumpStats();
     } catch (error) {
       setErrorMessage((error as Error).message);
     }
@@ -165,6 +202,7 @@ export function useTasks(token: string, onTokenExpired?: () => void) {
       setTasks((previous) => previous.filter((task) => task._id !== taskId));
       setTotalTasks((previous) => Math.max(0, previous - 1));
       setSuccessMessage("Task deleted");
+      bumpStats();
     } catch (error) {
       setErrorMessage((error as Error).message);
     }
@@ -190,6 +228,37 @@ export function useTasks(token: string, onTokenExpired?: () => void) {
         previous.map((currentTask) => (currentTask._id === task._id ? data : currentTask))
       );
       setSuccessMessage(`Task updated to ${formatStatusLabel(status)}`);
+      bumpStats();
+    } catch (error) {
+      setErrorMessage((error as Error).message);
+    }
+  };
+
+  const handleUpdateTask = async (
+    taskId: string,
+    data: Partial<Pick<Task, "title" | "description" | "priority" | "dueDate" | "tags">>
+  ) => {
+    if (!token) return;
+
+    try {
+      setErrorMessage("");
+      const response = await fetch(apiPath(`/api/tasks/${taskId}`), {
+        method: "PUT",
+        headers: createHeaders(token),
+        body: JSON.stringify(data),
+      });
+
+      const updated = (await response.json()) as Task & { message?: string };
+
+      if (!response.ok) {
+        throw new Error(updated.message || "Failed to update task");
+      }
+
+      setTasks((previous) =>
+        previous.map((task) => (task._id === taskId ? updated : task))
+      );
+      setSuccessMessage("Task updated");
+      bumpStats();
     } catch (error) {
       setErrorMessage((error as Error).message);
     }
@@ -200,7 +269,7 @@ export function useTasks(token: string, onTokenExpired?: () => void) {
     tasks,
     totalTasks,
     totalPages,
-    taskSummary,
+    stats,
     loadingTasks,
     // pagination
     page,
@@ -239,5 +308,6 @@ export function useTasks(token: string, onTokenExpired?: () => void) {
     handleCreateTask,
     handleDeleteTask,
     handleStatusChange,
+    handleUpdateTask,
   };
 }
