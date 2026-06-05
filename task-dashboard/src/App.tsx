@@ -17,7 +17,7 @@ function App() {
 
   return (
     <main className="dashboard-shell">
-      <HeroPanel totalTasks={tasks.totalTasks} taskSummary={tasks.taskSummary} />
+      <HeroPanel totalTasks={tasks.totalTasks} stats={tasks.stats} />
 
       <TopBar user={auth.user} onLogout={auth.handleLogout} />
 
@@ -62,6 +62,7 @@ function App() {
         totalPages={tasks.totalPages}
         setPage={tasks.setPage}
         onStatusChange={tasks.handleStatusChange}
+        onUpdate={tasks.handleUpdateTask}
         onDelete={tasks.handleDeleteTask}
       />
     </main>

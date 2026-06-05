@@ -1,16 +1,16 @@
-type TaskSummary = {
-  visible: number;
+type TaskStats = {
+  total: number;
   pending: number;
   inProgress: number;
   completed: number;
 };
 
 type Props = {
-  totalTasks: number;
-  taskSummary: TaskSummary;
+  totalTasks: number; // filtered count (matching current page filters)
+  stats: TaskStats;   // global counts from /api/tasks/stats
 };
 
-export function HeroPanel({ totalTasks, taskSummary }: Props) {
+export function HeroPanel({ totalTasks, stats }: Props) {
   return (
     <section className="hero-panel">
       <div className="hero-copy">
@@ -24,32 +24,32 @@ export function HeroPanel({ totalTasks, taskSummary }: Props) {
 
       <div className="hero-stats" aria-label="Task summary">
         <article className="stat-card stat-card--wide">
-          <span>Total tasks</span>
+          <span>Filtered tasks</span>
           <strong>{totalTasks}</strong>
           <small>Matching current filters</small>
         </article>
 
-        <article className="stat-card">
-          <span>Visible</span>
-          <strong>{taskSummary.visible}</strong>
-          <small>On this page</small>
+        <article className="stat-card stat-card--wide">
+          <span>All your tasks</span>
+          <strong>{stats.total}</strong>
+          <small>Across all filters</small>
         </article>
 
         <article className="stat-card stat-card--subtle stat-card--pending">
           <span>Pending</span>
-          <strong>{taskSummary.pending}</strong>
+          <strong>{stats.pending}</strong>
           <small>Needs attention</small>
         </article>
 
         <article className="stat-card stat-card--subtle stat-card--progress">
           <span>In progress</span>
-          <strong>{taskSummary.inProgress}</strong>
+          <strong>{stats.inProgress}</strong>
           <small>Currently moving</small>
         </article>
 
         <article className="stat-card stat-card--subtle stat-card--done">
           <span>Completed</span>
-          <strong>{taskSummary.completed}</strong>
+          <strong>{stats.completed}</strong>
           <small>Recently closed</small>
         </article>
       </div>
