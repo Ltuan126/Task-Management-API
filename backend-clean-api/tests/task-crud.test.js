@@ -242,14 +242,57 @@ describe("Task CRUD", () => {
         });
     });
 
-    // ─── Health check ─────────────────────────────────────────────────────────
+    // ─── GET /api/tasks/stats ─────────────────────────────────────────────────
 
-    describe("GET /health", () => {
-        it("returns 200 with status OK", async () => {
-            const res = await request(app).get("/health");
+    describe("GET /api/tasks/stats", () => {
+        it("returns correct counts across all statuses", async () => {
+            const { token } = await registerAndLogin();
+
+            await createTask(token, { status: "pending" });
+            await createTask(token, { status: "pending" });
+            await createTask(token, { status: "in-progress" });
+            await createTask(token, { status: "completed" });
+
+            const res = await request(app)
+                .get("/api/tasks/stats")
+                .set("Authorization", `Bearer ${token}`);
 
             expect(res.status).toBe(200);
-            expect(res.body.status).toBe("OK");
+            expect(res.body.pending).toBe(2);
+            expect(res.body.inProgress).toBe(1);
+            expect(res.body.completed).toBe(1);
+            expect(res.body.total).toBe(4);
+        });
+
+        it("returns zero counts for a user with no tasks", async () => {
+            const { token } = await registerAndLogin();
+
+            const res = await request(app)
+                .get("/api/tasks/stats")
+                .set("Authorization", `Bearer ${token}`);
+
+            expect(res.status).toBe(200);
+            expect(res.body.total).toBe(0);
+            expect(res.body.pending).toBe(0);
+        });
+
+        it("only counts tasks belonging to the requesting user", async () => {
+            const owner = await registerAndLogin();
+            const other = await registerAndLogin();
+
+            // owner has 3 tasks, other has 1
+            await createTask(owner.token, { status: "pending" });
+            await createTask(owner.token, { status: "completed" });
+            await createTask(owner.token, { status: "in-progress" });
+            await createTask(other.token, { status: "pending" });
+
+            const res = await request(app)
+                .get("/api/tasks/stats")
+                .set("Authorization", `Bearer ${owner.token}`);
+
+            expect(res.status).toBe(200);
+            expect(res.body.total).toBe(3);
         });
     });
 });
+

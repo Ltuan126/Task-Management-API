@@ -96,6 +96,21 @@ class TaskRepository {
     async deleteTask(id, userId) {
         return await Task.findOneAndDelete({ _id: id, owner: userId });
     }
+
+    async getStats(userId) {
+        const [pending, inProgress, completed] = await Promise.all([
+            Task.countDocuments({ owner: userId, status: "pending" }),
+            Task.countDocuments({ owner: userId, status: "in-progress" }),
+            Task.countDocuments({ owner: userId, status: "completed" }),
+        ]);
+
+        return {
+            total: pending + inProgress + completed,
+            pending,
+            inProgress,
+            completed,
+        };
+    }
 }
 
 module.exports = new TaskRepository();

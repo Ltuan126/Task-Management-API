@@ -68,6 +68,10 @@ class TaskService {
         return await taskRepository.deleteTask(id, userId);
     }
 
+    async getStats(userId) {
+        return await taskRepository.getStats(userId);
+    }
+
 }
 
 module.exports = new TaskService();

@@ -111,6 +111,16 @@ class TaskController {
             return handleTaskError(res, error);
         }
     }
+
+    async getStats(req, res) {
+        try {
+            const userId = req.user.id;
+            const stats = await taskService.getStats(userId);
+            return res.json(stats);
+        } catch (error) {
+            return handleTaskError(res, error);
+        }
+    }
 }
 
 module.exports = new TaskController();

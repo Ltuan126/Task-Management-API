@@ -60,6 +60,7 @@ const updateTaskValidation = [
 // Apply auth middleware to all task routes
 router.use(authMiddleware);
 
+router.get("/stats", taskController.getStats);
 router.get("/", listTasksValidation, taskController.getTasks);
 router.get("/:id", taskController.getTask);
 router.post("/", createTaskValidation, taskController.createTask);
