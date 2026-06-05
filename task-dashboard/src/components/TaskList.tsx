@@ -11,6 +11,10 @@ type Props = {
   totalPages: number;
   setPage: (updater: (current: number) => number) => void;
   onStatusChange: (task: Task, status: Task["status"]) => void;
+  onUpdate: (
+    taskId: string,
+    data: Partial<Pick<Task, "title" | "description" | "priority" | "dueDate" | "tags">>
+  ) => void;
   onDelete: (taskId: string) => void;
 };
 
@@ -24,6 +28,7 @@ export function TaskList({
   totalPages,
   setPage,
   onStatusChange,
+  onUpdate,
   onDelete,
 }: Props) {
   return (
@@ -44,6 +49,7 @@ export function TaskList({
               key={task._id}
               task={task}
               onStatusChange={onStatusChange}
+              onUpdate={onUpdate}
               onDelete={onDelete}
             />
           ))}
