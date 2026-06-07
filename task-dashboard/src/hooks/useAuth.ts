@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import type { FormEvent } from "react";
 import { apiPath } from "../lib/api";
 import { TOKEN_KEY, USER_KEY } from "../types";
@@ -61,12 +61,12 @@ export function useAuth() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     setToken("");
     setUser(null);
-  };
+  }, []);
 
   return {
     token,
