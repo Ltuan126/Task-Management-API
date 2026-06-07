@@ -33,7 +33,7 @@ export function TaskFilters({
 }: Props) {
   return (
     <section className="panel">
-      <h2>Task Filters</h2>
+      <h2>⌘ Filters</h2>
       <div className="filter-grid">
         <label>
           Search

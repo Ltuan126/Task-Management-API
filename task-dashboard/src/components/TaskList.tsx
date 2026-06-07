@@ -33,7 +33,7 @@ export function TaskList({
 }: Props) {
   return (
     <section className="panel">
-      <h2>Tasks ({totalTasks})</h2>
+      <h2>◈ Tasks ({totalTasks})</h2>
 
       {errorMessage && <p className="banner error">{errorMessage}</p>}
       {successMessage && <p className="banner success">{successMessage}</p>}
