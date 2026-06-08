@@ -877,3 +877,117 @@ button.danger:hover {
 
 .create-submit-btn:hover svg { transform: rotate(90deg); }
 
+
+/* ═══════════════════════════════════════════════════════════
+   Analytics Dashboard
+   ═══════════════════════════════════════════════════════════ */
+.analytics-panel {
+  padding: 1.8rem 2rem;
+  background: rgba(255, 255, 255, 0.88) !important;
+  border-color: rgba(26, 92, 71, 0.12) !important;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.analytics-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(26, 92, 71, 0.08);
+  padding-bottom: 1rem;
+}
+
+.analytics-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+}
+
+.analytics-subtitle {
+  font-size: 0.88rem;
+  color: var(--ghost);
+  margin: 0.2rem 0 0 0;
+}
+
+.refresh-btn {
+  background: var(--white);
+  border: 1.5px solid var(--line);
+  color: var(--ghost);
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 150ms ease;
+  box-shadow: 0 1px 3px rgba(13, 31, 23, 0.05);
+}
+
+.refresh-btn:hover {
+  color: var(--forest-mid);
+  border-color: var(--forest-mid);
+  background: var(--pale-bg);
+}
+
+.refresh-btn:active {
+  transform: scale(0.95);
+}
+
+.refresh-btn.spinning svg {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.analytics-empty {
+  padding: 3rem;
+  text-align: center;
+  color: var(--ghost);
+  font-size: 0.95rem;
+}
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.chart-card {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(26, 92, 71, 0.06);
+  border-radius: 14px;
+  padding: 1.25rem;
+  box-shadow: 0 2px 8px rgba(13, 31, 23, 0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.chart-card h3 {
+  font-size: 0.76rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ghost);
+  font-weight: 700;
+  margin: 0;
+}
+
+.chart-wrapper {
+  position: relative;
+  height: 250px;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+

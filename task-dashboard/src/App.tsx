@@ -1,15 +1,26 @@
+import { useEffect } from "react";
 import { useAuth } from "./hooks/useAuth";
 import { useTasks } from "./hooks/useTasks";
+import { useAnalytics } from "./hooks/useAnalytics";
 import { AuthPage } from "./components/AuthPage";
 import { TopBar } from "./components/TopBar";
 import { HeroPanel } from "./components/HeroPanel";
 import { CreateTaskForm } from "./components/CreateTaskForm";
 import { TaskFilters } from "./components/TaskFilters";
 import { TaskList } from "./components/TaskList";
+import { AnalyticsPanel } from "./components/AnalyticsPanel";
 
 function App() {
   const auth = useAuth();
   const tasks = useTasks(auth.token, auth.handleLogout);
+  const analytics = useAnalytics(auth.token || "");
+
+  // Auto-refresh analytics when tasks stats change
+  useEffect(() => {
+    if (auth.token) {
+      analytics.refreshAnalytics();
+    }
+  }, [tasks.stats, auth.token]);
 
   if (!auth.token || !auth.user) {
     return <AuthPage {...auth} onSubmit={auth.handleAuthSubmit} />;
@@ -64,6 +75,12 @@ function App() {
         onStatusChange={tasks.handleStatusChange}
         onUpdate={tasks.handleUpdateTask}
         onDelete={tasks.handleDeleteTask}
+      />
+
+      <AnalyticsPanel
+        data={analytics.analytics}
+        loading={analytics.loading}
+        onRefresh={analytics.refreshAnalytics}
       />
     </main>
   );
