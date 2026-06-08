@@ -57,11 +57,13 @@ jobs:
 
     steps:
       - name: Trigger Render production deploy hook
-        if: ${{ secrets.RENDER_DEPLOY_HOOK_PROD != '' }}
+        env:
+          RENDER_DEPLOY_HOOK_PROD: ${{ secrets.RENDER_DEPLOY_HOOK_PROD }}
+        if: ${{ env.RENDER_DEPLOY_HOOK_PROD != '' }}
         run: |
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
             --request POST \
-            "${{ secrets.RENDER_DEPLOY_HOOK_PROD }}")
+            "$RENDER_DEPLOY_HOOK_PROD")
 
           if [[ "$HTTP_STATUS" =~ ^2 ]]; then
             echo "✅ Production deploy triggered (HTTP $HTTP_STATUS)"
@@ -83,11 +85,13 @@ jobs:
 
     steps:
       - name: Trigger Render staging deploy hook
-        if: ${{ secrets.RENDER_DEPLOY_HOOK_STAGING != '' }}
+        env:
+          RENDER_DEPLOY_HOOK_STAGING: ${{ secrets.RENDER_DEPLOY_HOOK_STAGING }}
+        if: ${{ env.RENDER_DEPLOY_HOOK_STAGING != '' }}
         run: |
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
             --request POST \
-            "${{ secrets.RENDER_DEPLOY_HOOK_STAGING }}")
+            "$RENDER_DEPLOY_HOOK_STAGING")
 
           if [[ "$HTTP_STATUS" =~ ^2 ]]; then
             echo "✅ Staging deploy triggered (HTTP $HTTP_STATUS)"
