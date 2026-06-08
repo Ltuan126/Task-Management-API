@@ -31,8 +31,8 @@ class TaskController {
             const validationResponse = sendValidationErrors(req, res);
             if (validationResponse) return validationResponse;
 
-            const userId = req.user.id;
-            const task = await taskService.createTask(req.body, userId);
+            const user = req.user;
+            const task = await taskService.createTask(req.body, user);
             return res.status(201).json(task);
         } catch (error) {
             return handleTaskError(res, error);
@@ -44,8 +44,8 @@ class TaskController {
             const validationResponse = sendValidationErrors(req, res);
             if (validationResponse) return validationResponse;
 
-            const userId = req.user.id;
-            const tasks = await taskService.getTasks(userId, req.query);
+            const user = req.user;
+            const tasks = await taskService.getTasks(user, req.query);
             return res.json(tasks);
         } catch (error) {
             return handleTaskError(res, error);
@@ -58,8 +58,8 @@ class TaskController {
                 return res.status(400).json({ message: "Invalid task id" });
             }
 
-            const userId = req.user.id;
-            const task = await taskService.getTask(req.params.id, userId);
+            const user = req.user;
+            const task = await taskService.getTask(req.params.id, user);
 
             if (!task) {
                 return res.status(404).json({ message: "Task not found" });
@@ -80,8 +80,8 @@ class TaskController {
                 return res.status(400).json({ message: "Invalid task id" });
             }
 
-            const userId = req.user.id;
-            const task = await taskService.updateTask(req.params.id, req.body, userId);
+            const user = req.user;
+            const task = await taskService.updateTask(req.params.id, req.body, user);
 
             if (!task) {
                 return res.status(404).json({ message: "Task not found" });
@@ -99,8 +99,8 @@ class TaskController {
                 return res.status(400).json({ message: "Invalid task id" });
             }
 
-            const userId = req.user.id;
-            const task = await taskService.deleteTask(req.params.id, userId);
+            const user = req.user;
+            const task = await taskService.deleteTask(req.params.id, user);
 
             if (!task) {
                 return res.status(404).json({ message: "Task not found" });
@@ -114,8 +114,8 @@ class TaskController {
 
     async getStats(req, res) {
         try {
-            const userId = req.user.id;
-            const stats = await taskService.getStats(userId);
+            const user = req.user;
+            const stats = await taskService.getStats(user);
             return res.json(stats);
         } catch (error) {
             return handleTaskError(res, error);

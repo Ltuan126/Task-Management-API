@@ -9,7 +9,7 @@ class TaskRepository {
         return await Task.create(data);
     }
 
-    async getAllTask(userId, options = {}) {
+    async getAllTask(user, options = {}) {
         const {
             page = 1,
             limit = 10,
@@ -20,9 +20,15 @@ class TaskRepository {
             dueDateTo,
             sortBy = "createdAt",
             sortOrder = "desc",
+            owner,
         } = options;
 
-        const filter = { owner: userId };
+        const filter = {};
+        if (user.role !== "admin") {
+            filter.owner = user.id;
+        } else if (owner) {
+            filter.owner = owner;
+        }
 
         if (status) {
             filter.status = status;
@@ -76,32 +82,50 @@ class TaskRepository {
         };
     }
 
-    async getTaskbyId(id, userId) {
-        return await Task.findOne({ _id: id, owner: userId });
+    async getTaskbyId(id, user) {
+        const query = { _id: id };
+        if (user.role !== "admin") {
+            query.owner = user.id;
+        }
+        return await Task.findOne(query);
     }
 
-    async updateTask(id, data, userId) {
+    async updateTask(id, data, user) {
         // Only pick explicitly allowed fields — protects against mass assignment attacks
         const safeData = Object.fromEntries(
             Object.entries(data).filter(([key]) => UPDATABLE_FIELDS.includes(key))
         );
 
+        const query = { _id: id };
+        if (user.role !== "admin") {
+            query.owner = user.id;
+        }
+
         return await Task.findOneAndUpdate(
-            { _id: id, owner: userId },
+            query,
             safeData,
             { returnDocument: "after", runValidators: true }
         );
     }
 
-    async deleteTask(id, userId) {
-        return await Task.findOneAndDelete({ _id: id, owner: userId });
+    async deleteTask(id, user) {
+        const query = { _id: id };
+        if (user.role !== "admin") {
+            query.owner = user.id;
+        }
+        return await Task.findOneAndDelete(query);
     }
 
-    async getStats(userId) {
+    async getStats(user) {
+        const query = {};
+        if (user.role !== "admin") {
+            query.owner = user.id;
+        }
+
         const [pending, inProgress, completed] = await Promise.all([
-            Task.countDocuments({ owner: userId, status: "pending" }),
-            Task.countDocuments({ owner: userId, status: "in-progress" }),
-            Task.countDocuments({ owner: userId, status: "completed" }),
+            Task.countDocuments({ ...query, status: "pending" }),
+            Task.countDocuments({ ...query, status: "in-progress" }),
+            Task.countDocuments({ ...query, status: "completed" }),
         ]);
 
         return {
