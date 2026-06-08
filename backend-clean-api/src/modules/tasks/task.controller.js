@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const { validationResult } = require("express-validator");
 const taskService = require("./task.service");
+const auditService = require("../audit/audit.service");
 
 const isInvalidObjectId = (id) => !mongoose.Types.ObjectId.isValid(id);
 
@@ -33,6 +34,15 @@ class TaskController {
 
             const user = req.user;
             const task = await taskService.createTask(req.body, user);
+
+            auditService.log({
+                userId: user.id,
+                email: user.email,
+                action: "TASK_CREATED",
+                ipAddress: req.ip,
+                details: { taskId: task._id, title: task.title, priority: task.priority },
+            });
+
             return res.status(201).json(task);
         } catch (error) {
             return handleTaskError(res, error);
@@ -87,6 +97,14 @@ class TaskController {
                 return res.status(404).json({ message: "Task not found" });
             }
 
+            auditService.log({
+                userId: user.id,
+                email: user.email,
+                action: "TASK_UPDATED",
+                ipAddress: req.ip,
+                details: { taskId: task._id, title: task.title, updates: Object.keys(req.body) },
+            });
+
             return res.json(task);
         } catch (error) {
             return handleTaskError(res, error);
@@ -105,6 +123,14 @@ class TaskController {
             if (!task) {
                 return res.status(404).json({ message: "Task not found" });
             }
+
+            auditService.log({
+                userId: user.id,
+                email: user.email,
+                action: "TASK_DELETED",
+                ipAddress: req.ip,
+                details: { taskId: task._id, title: task.title },
+            });
 
             return res.json({ message: "Task deleted" });
         } catch (error) {

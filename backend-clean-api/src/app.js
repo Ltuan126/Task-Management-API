@@ -66,10 +66,12 @@ app.use("/api-docs", ...swaggerMiddleware);
 const taskRoutes = require("./modules/tasks/task.route");
 const authRoutes = require("./modules/auth/auth.route");
 const adminRoutes = require("./modules/admin/admin.route");
+const auditRoutes = require("./modules/audit/audit.route");
 
 app.use("/api/tasks", taskRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/audit", auditRoutes);
 
 // ---------------------------------------------------------------------------
 // Global error handler — must be registered AFTER all routes

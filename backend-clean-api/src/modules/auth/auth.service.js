@@ -12,9 +12,9 @@ const getJwtSecret = () => {
 };
 
 class AuthService {
-    generateToken(userId, role) {
+    generateToken(userId, role, email) {
         return jwt.sign(
-            { userId, role },
+            { userId, role, email },
             getJwtSecret(),
             { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
         );
@@ -30,7 +30,7 @@ class AuthService {
         }
 
         const user = await authRepository.createUser(data);
-        const token = this.generateToken(user._id.toString(), user.role);
+        const token = this.generateToken(user._id.toString(), user.role, user.email);
 
         return {
             user: {
@@ -60,7 +60,7 @@ class AuthService {
             throw error;
         }
 
-        const token = this.generateToken(user._id.toString(), user.role);
+        const token = this.generateToken(user._id.toString(), user.role, user.email);
 
         return {
             user: {
