@@ -57,6 +57,7 @@ jobs:
 
     steps:
       - name: Trigger Render production deploy hook
+        if: ${{ secrets.RENDER_DEPLOY_HOOK_PROD != '' }}
         run: |
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
             --request POST \
@@ -82,6 +83,7 @@ jobs:
 
     steps:
       - name: Trigger Render staging deploy hook
+        if: ${{ secrets.RENDER_DEPLOY_HOOK_STAGING != '' }}
         run: |
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
             --request POST \

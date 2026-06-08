@@ -38,7 +38,7 @@ jobs:
         run: npm run build
 
       - name: Deploy to Vercel (Production)
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push' && secrets.VERCEL_TOKEN != ''
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
@@ -48,7 +48,7 @@ jobs:
           working-directory: task-dashboard
 
       - name: Deploy to Vercel (Preview/Staging)
-        if: github.ref != 'refs/heads/main' || github.event_name == 'pull_request'
+        if: (github.ref != 'refs/heads/main' || github.event_name == 'pull_request') && secrets.VERCEL_TOKEN != ''
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
