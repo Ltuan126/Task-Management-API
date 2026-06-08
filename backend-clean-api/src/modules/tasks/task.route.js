@@ -61,6 +61,7 @@ const updateTaskValidation = [
 router.use(authMiddleware);
 
 router.get("/stats", taskController.getStats);
+router.get("/analytics", taskController.getAnalytics);
 router.get("/", listTasksValidation, taskController.getTasks);
 router.get("/:id", taskController.getTask);
 router.post("/", createTaskValidation, taskController.createTask);

@@ -147,6 +147,16 @@ class TaskController {
             return handleTaskError(res, error);
         }
     }
+
+    async getAnalytics(req, res) {
+        try {
+            const user = req.user;
+            const analytics = await taskService.getAnalytics(user);
+            return res.json(analytics);
+        } catch (error) {
+            return handleTaskError(res, error);
+        }
+    }
 }
 
 module.exports = new TaskController();

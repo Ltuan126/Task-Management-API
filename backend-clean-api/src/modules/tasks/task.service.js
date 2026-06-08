@@ -74,6 +74,9 @@ class TaskService {
         return await taskRepository.getStats(user);
     }
 
+    async getAnalytics(user) {
+        return await taskRepository.getAnalytics(user);
+    }
 }
 
 module.exports = new TaskService();

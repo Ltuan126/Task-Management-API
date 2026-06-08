@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Task = require("../../models/task.model");
 
 // Fields that clients are permitted to update.
@@ -133,6 +134,50 @@ class TaskRepository {
             pending,
             inProgress,
             completed,
+        };
+    }
+
+    async getAnalytics(user) {
+        const match = user.role === "admin" ? {} : { owner: new mongoose.Types.ObjectId(user.id) };
+
+        const [statusStats, priorityStats, creationTrend, tagStats] = await Promise.all([
+            Task.aggregate([
+                { $match: match },
+                { $group: { _id: "$status", count: { $sum: 1 } } }
+            ]),
+            Task.aggregate([
+                { $match: match },
+                { $group: { _id: "$priority", count: { $sum: 1 } } }
+            ]),
+            Task.aggregate([
+                {
+                    $match: {
+                        ...match,
+                        createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
+                    }
+                },
+                {
+                    $group: {
+                        _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                        count: { $sum: 1 }
+                    }
+                },
+                { $sort: { _id: 1 } }
+            ]),
+            Task.aggregate([
+                { $match: match },
+                { $unwind: "$tags" },
+                { $group: { _id: "$tags", count: { $sum: 1 } } },
+                { $sort: { count: -1 } },
+                { $limit: 10 }
+            ])
+        ]);
+
+        return {
+            statusStats,
+            priorityStats,
+            creationTrend,
+            tagStats
         };
     }
 }
