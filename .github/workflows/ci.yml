@@ -1,24 +1,24 @@
-name: CI
+name: CI / CD
 
 on:
   push:
-    branches:
-      - main
-      - develop
+    branches: [main, develop]
     paths:
       - "backend-clean-api/**"
       - ".github/workflows/ci.yml"
   pull_request:
-    branches:
-      - main
-      - develop
+    branches: [main, develop]
     paths:
       - "backend-clean-api/**"
       - ".github/workflows/ci.yml"
   workflow_dispatch:
 
 jobs:
+  # ──────────────────────────────────────────────────────────────
+  # Job 1: Run backend tests (always)
+  # ──────────────────────────────────────────────────────────────
   test:
+    name: Test (Node 20)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -41,5 +41,55 @@ jobs:
       - name: Run tests
         env:
           JWT_SECRET: ci-secret-key
-          CI: true
+          NODE_ENV: test
         run: npm test
+
+  # ──────────────────────────────────────────────────────────────
+  # Job 2: Deploy to Render PRODUCTION (main branch only)
+  # Requires secret: RENDER_DEPLOY_HOOK_PROD
+  # ──────────────────────────────────────────────────────────────
+  deploy-production:
+    name: Deploy → Production (Render)
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Trigger Render production deploy hook
+        run: |
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            --request POST \
+            "${{ secrets.RENDER_DEPLOY_HOOK_PROD }}")
+
+          if [[ "$HTTP_STATUS" =~ ^2 ]]; then
+            echo "✅ Production deploy triggered (HTTP $HTTP_STATUS)"
+          else
+            echo "❌ Deploy hook returned HTTP $HTTP_STATUS"
+            exit 1
+          fi
+
+  # ──────────────────────────────────────────────────────────────
+  # Job 3: Deploy to Render STAGING (develop branch only)
+  # Requires secret: RENDER_DEPLOY_HOOK_STAGING
+  # ──────────────────────────────────────────────────────────────
+  deploy-staging:
+    name: Deploy → Staging (Render)
+    needs: test
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Trigger Render staging deploy hook
+        run: |
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            --request POST \
+            "${{ secrets.RENDER_DEPLOY_HOOK_STAGING }}")
+
+          if [[ "$HTTP_STATUS" =~ ^2 ]]; then
+            echo "✅ Staging deploy triggered (HTTP $HTTP_STATUS)"
+          else
+            echo "❌ Deploy hook returned HTTP $HTTP_STATUS"
+            exit 1
+          fi
