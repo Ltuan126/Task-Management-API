@@ -1,4 +1,5 @@
 const AuditLog = require("../../models/audit-log.model");
+const { escapeRegex } = require("../../utils/escapeRegex");
 
 class AuditController {
     async getAuditLogs(req, res) {
@@ -10,7 +11,7 @@ class AuditController {
                 filter.action = action;
             }
             if (email) {
-                filter.email = { $regex: email, $options: "i" };
+                filter.email = { $regex: escapeRegex(email), $options: "i" };
             }
 
             const pageNum = parseInt(page, 10) || 1;

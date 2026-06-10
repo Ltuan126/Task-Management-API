@@ -2,8 +2,15 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const morgan = require("morgan");
+const helmet = require("helmet");
+const mongoSanitize = require("express-mongo-sanitize");
 const { swaggerSpec, swaggerMiddleware } = require("./config/swagger");
 const errorMiddleware = require("./middlewares/error.middleware");
+
+// ---------------------------------------------------------------------------
+// Security — HTTP headers hardening via helmet
+// ---------------------------------------------------------------------------
+app.use(helmet());
 
 // ---------------------------------------------------------------------------
 // CORS — only allow origins listed in ALLOWED_ORIGINS env var.
@@ -42,7 +49,27 @@ if (process.env.NODE_ENV !== "test") {
     app.use(morgan("dev"));
 }
 
-app.use(express.json());
+// ---------------------------------------------------------------------------
+// Body parsing — limit payload size to prevent DoS via large requests
+// ---------------------------------------------------------------------------
+app.use(express.json({ limit: "10kb" }));
+
+// ---------------------------------------------------------------------------
+// NoSQL injection prevention — strips $ and . from req.body/query/params
+// ---------------------------------------------------------------------------
+// Express 5 query getter workaround for express-mongo-sanitize
+app.use((req, res, next) => {
+    if (req.query) {
+        Object.defineProperty(req, 'query', {
+            value: { ...req.query },
+            writable: true,
+            configurable: true,
+            enumerable: true,
+        });
+    }
+    next();
+});
+app.use(mongoSanitize());
 
 // Route test
 app.get("/", (req, res) => {
@@ -72,6 +99,13 @@ app.use("/api/tasks", taskRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/audit", auditRoutes);
+
+// ---------------------------------------------------------------------------
+// 404 handler for unmatched routes
+// ---------------------------------------------------------------------------
+app.use((req, res) => {
+    res.status(404).json({ message: `Route ${req.method} ${req.originalUrl} not found` });
+});
 
 // ---------------------------------------------------------------------------
 // Global error handler — must be registered AFTER all routes

@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Task = require("../../models/task.model");
+const { escapeRegex } = require("../../utils/escapeRegex");
 
 // Fields that clients are permitted to update.
 // Any other fields in the request body (e.g. owner, _id) are silently ignored.
@@ -40,9 +41,10 @@ class TaskRepository {
         }
 
         if (q) {
+            const safeQ = escapeRegex(q);
             filter.$or = [
-                { title: { $regex: q, $options: "i" } },
-                { description: { $regex: q, $options: "i" } },
+                { title: { $regex: safeQ, $options: "i" } },
+                { description: { $regex: safeQ, $options: "i" } },
             ];
         }
 

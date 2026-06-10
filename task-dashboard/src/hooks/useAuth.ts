@@ -8,7 +8,24 @@ export function useAuth() {
   const [token, setToken] = useState<string>(() => localStorage.getItem(TOKEN_KEY) || "");
   const [user, setUser] = useState<User | null>(() => {
     const stored = localStorage.getItem(USER_KEY);
-    return stored ? (JSON.parse(stored) as User) : null;
+    if (!stored) return null;
+    try {
+      const parsed = JSON.parse(stored);
+      if (
+        parsed &&
+        typeof parsed === "object" &&
+        typeof parsed.id === "string" &&
+        typeof parsed.name === "string" &&
+        typeof parsed.email === "string"
+      ) {
+        return parsed as User;
+      }
+      localStorage.removeItem(USER_KEY);
+      return null;
+    } catch {
+      localStorage.removeItem(USER_KEY);
+      return null;
+    }
   });
 
   const [isRegisterMode, setIsRegisterMode] = useState(false);
