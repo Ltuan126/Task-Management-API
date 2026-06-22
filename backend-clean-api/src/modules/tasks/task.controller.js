@@ -1,37 +1,19 @@
 const mongoose = require("mongoose");
-const { validationResult } = require("express-validator");
 const taskService = require("./task.service");
 const auditService = require("../audit/audit.service");
 
 const isInvalidObjectId = (id) => !mongoose.Types.ObjectId.isValid(id);
 
-const handleTaskError = (res, error) => {
+const handleTaskError = (res, next, error) => {
     if (error.name === "ValidationError") {
         return res.status(400).json({ message: error.message });
     }
-
-    return res.status(500).json({ message: "Internal server error" });
-};
-
-const sendValidationErrors = (req, res) => {
-    const errors = validationResult(req);
-
-    if (errors.isEmpty()) {
-        return null;
-    }
-
-    return res.status(400).json({
-        message: "Validation failed",
-        errors: errors.array(),
-    });
+    return next(error);
 };
 
 class TaskController {
-    async createTask(req, res) {
+    async createTask(req, res, next) {
         try {
-            const validationResponse = sendValidationErrors(req, res);
-            if (validationResponse) return validationResponse;
-
             const user = req.user;
             const task = await taskService.createTask(req.body, user);
 
@@ -45,24 +27,21 @@ class TaskController {
 
             return res.status(201).json(task);
         } catch (error) {
-            return handleTaskError(res, error);
+            return handleTaskError(res, next, error);
         }
     }
 
-    async getTasks(req, res) {
+    async getTasks(req, res, next) {
         try {
-            const validationResponse = sendValidationErrors(req, res);
-            if (validationResponse) return validationResponse;
-
             const user = req.user;
             const tasks = await taskService.getTasks(user, req.query);
             return res.json(tasks);
         } catch (error) {
-            return handleTaskError(res, error);
+            return handleTaskError(res, next, error);
         }
     }
 
-    async getTask(req, res) {
+    async getTask(req, res, next) {
         try {
             if (isInvalidObjectId(req.params.id)) {
                 return res.status(400).json({ message: "Invalid task id" });
@@ -77,15 +56,12 @@ class TaskController {
 
             return res.json(task);
         } catch (error) {
-            return handleTaskError(res, error);
+            return handleTaskError(res, next, error);
         }
     }
 
-    async updateTask(req, res) {
+    async updateTask(req, res, next) {
         try {
-            const validationResponse = sendValidationErrors(req, res);
-            if (validationResponse) return validationResponse;
-
             if (isInvalidObjectId(req.params.id)) {
                 return res.status(400).json({ message: "Invalid task id" });
             }
@@ -107,11 +83,11 @@ class TaskController {
 
             return res.json(task);
         } catch (error) {
-            return handleTaskError(res, error);
+            return handleTaskError(res, next, error);
         }
     }
 
-    async deleteTask(req, res) {
+    async deleteTask(req, res, next) {
         try {
             if (isInvalidObjectId(req.params.id)) {
                 return res.status(400).json({ message: "Invalid task id" });
@@ -134,27 +110,27 @@ class TaskController {
 
             return res.json({ message: "Task deleted" });
         } catch (error) {
-            return handleTaskError(res, error);
+            return handleTaskError(res, next, error);
         }
     }
 
-    async getStats(req, res) {
+    async getStats(req, res, next) {
         try {
             const user = req.user;
             const stats = await taskService.getStats(user);
             return res.json(stats);
         } catch (error) {
-            return handleTaskError(res, error);
+            return handleTaskError(res, next, error);
         }
     }
 
-    async getAnalytics(req, res) {
+    async getAnalytics(req, res, next) {
         try {
             const user = req.user;
             const analytics = await taskService.getAnalytics(user);
             return res.json(analytics);
         } catch (error) {
-            return handleTaskError(res, error);
+            return handleTaskError(res, next, error);
         }
     }
 }

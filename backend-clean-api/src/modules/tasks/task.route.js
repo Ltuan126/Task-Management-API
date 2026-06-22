@@ -3,6 +3,7 @@ const { body, query } = require("express-validator");
 const router = express.Router();
 const taskController = require("./task.controller");
 const authMiddleware = require("../../middlewares/auth.middleware");
+const { validate } = require("../../middlewares/validation.middleware");
 
 const listTasksValidation = [
 	query("page").optional().isInt({ min: 1 }).withMessage("page must be a positive integer"),
@@ -62,10 +63,10 @@ router.use(authMiddleware);
 
 router.get("/stats", taskController.getStats);
 router.get("/analytics", taskController.getAnalytics);
-router.get("/", listTasksValidation, taskController.getTasks);
+router.get("/", listTasksValidation, validate, taskController.getTasks);
 router.get("/:id", taskController.getTask);
-router.post("/", createTaskValidation, taskController.createTask);
-router.put("/:id", updateTaskValidation, taskController.updateTask);
+router.post("/", createTaskValidation, validate, taskController.createTask);
+router.put("/:id", updateTaskValidation, validate, taskController.updateTask);
 router.delete("/:id", taskController.deleteTask);
 
 module.exports = router;

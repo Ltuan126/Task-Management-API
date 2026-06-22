@@ -2,6 +2,7 @@ const express = require("express");
 const { body } = require("express-validator");
 const authController = require("./auth.controller");
 const { authLimiter } = require("../../middlewares/rate-limit.middleware");
+const { validate } = require("../../middlewares/validation.middleware");
 
 const router = express.Router();
 
@@ -21,7 +22,7 @@ const loginValidation = [
     body("password").notEmpty().withMessage("Password is required"),
 ];
 
-router.post("/register", registerValidation, authController.register);
-router.post("/login", loginValidation, authController.login);
+router.post("/register", registerValidation, validate, authController.register);
+router.post("/login", loginValidation, validate, authController.login);
 
 module.exports = router;
