@@ -1,15 +1,6 @@
 const jwt = require("jsonwebtoken");
 const authRepository = require("./auth.repository");
-
-const getJwtSecret = () => {
-    if (!process.env.JWT_SECRET) {
-        const error = new Error("JWT_SECRET is not configured");
-        error.statusCode = 500;
-        throw error;
-    }
-
-    return process.env.JWT_SECRET;
-};
+const { getJwtSecret } = require("../../config/jwt");
 
 class AuthService {
     generateToken(userId, role, email) {
