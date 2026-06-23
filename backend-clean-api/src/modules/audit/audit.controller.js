@@ -2,7 +2,7 @@ const AuditLog = require("../../models/audit-log.model");
 const { escapeRegex } = require("../../utils/escapeRegex");
 
 class AuditController {
-    async getAuditLogs(req, res) {
+    async getAuditLogs(req, res, next) {
         try {
             const { page = 1, limit = 50, action, email } = req.query;
 
@@ -36,7 +36,7 @@ class AuditController {
                 },
             });
         } catch (error) {
-            return res.status(500).json({ message: "Internal server error" });
+            return next(error);
         }
     }
 }

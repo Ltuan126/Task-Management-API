@@ -1,17 +1,17 @@
 const User = require("../../models/user.model");
 
 class AdminController {
-    async getAllUsers(req, res) {
+    async getAllUsers(req, res, next) {
         try {
             // Find all users except selecting password
             const users = await User.find({}).select("-password").sort({ createdAt: -1 });
             return res.json(users);
         } catch (error) {
-            return res.status(500).json({ message: "Internal server error" });
+            return next(error);
         }
     }
 
-    async updateUserRole(req, res) {
+    async updateUserRole(req, res, next) {
         try {
             const { id } = req.params;
             const { role } = req.body;
@@ -40,7 +40,7 @@ class AdminController {
                 user,
             });
         } catch (error) {
-            return res.status(500).json({ message: "Internal server error" });
+            return next(error);
         }
     }
 }
