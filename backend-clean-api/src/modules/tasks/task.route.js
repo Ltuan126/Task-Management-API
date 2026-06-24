@@ -29,7 +29,13 @@ const listTasksValidation = [
 ];
 
 const createTaskValidation = [
-	body("title").trim().notEmpty().withMessage("title is required"),
+	body("title")
+		.trim()
+		.notEmpty().withMessage("title is required")
+		.isLength({ max: 100 }).withMessage("title cannot exceed 100 characters"),
+	body("description")
+		.optional()
+		.isLength({ max: 2000 }).withMessage("description cannot exceed 2000 characters"),
 	body("status")
 		.optional()
 		.isIn(["pending", "in-progress", "completed"])
@@ -39,12 +45,25 @@ const createTaskValidation = [
 		.isIn(["low", "medium", "high"])
 		.withMessage("priority must be one of: low, medium, high"),
 	body("dueDate").optional().isISO8601().withMessage("dueDate must be a valid ISO date"),
-	body("tags").optional().isArray().withMessage("tags must be an array"),
-	body("tags.*").optional().isString().withMessage("each tag must be a string"),
+	body("tags")
+		.optional()
+		.isArray().withMessage("tags must be an array")
+		.custom((val) => val.length <= 30).withMessage("tags cannot exceed 30 items"),
+	body("tags.*")
+		.optional()
+		.isString().withMessage("each tag must be a string")
+		.isLength({ max: 30 }).withMessage("each tag cannot exceed 30 characters"),
 ];
 
 const updateTaskValidation = [
-	body("title").optional().trim().notEmpty().withMessage("title cannot be empty"),
+	body("title")
+		.optional()
+		.trim()
+		.notEmpty().withMessage("title cannot be empty")
+		.isLength({ max: 100 }).withMessage("title cannot exceed 100 characters"),
+	body("description")
+		.optional()
+		.isLength({ max: 2000 }).withMessage("description cannot exceed 2000 characters"),
 	body("status")
 		.optional()
 		.isIn(["pending", "in-progress", "completed"])
@@ -54,8 +73,14 @@ const updateTaskValidation = [
 		.isIn(["low", "medium", "high"])
 		.withMessage("priority must be one of: low, medium, high"),
 	body("dueDate").optional().isISO8601().withMessage("dueDate must be a valid ISO date"),
-	body("tags").optional().isArray().withMessage("tags must be an array"),
-	body("tags.*").optional().isString().withMessage("each tag must be a string"),
+	body("tags")
+		.optional()
+		.isArray().withMessage("tags must be an array")
+		.custom((val) => val.length <= 30).withMessage("tags cannot exceed 30 items"),
+	body("tags.*")
+		.optional()
+		.isString().withMessage("each tag must be a string")
+		.isLength({ max: 30 }).withMessage("each tag cannot exceed 30 characters"),
 ];
 
 // Apply auth middleware to all task routes

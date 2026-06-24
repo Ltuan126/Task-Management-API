@@ -211,6 +211,58 @@ describe("Task CRUD", () => {
             expect(res.status).toBe(400);
             expect(res.body.message).toBe("Validation failed");
         });
+
+        it("returns 400 when title exceeds 100 characters", async () => {
+            const { token } = await registerAndLogin();
+            const longTitle = "a".repeat(101);
+
+            const res = await request(app)
+                .post("/api/tasks")
+                .set("Authorization", `Bearer ${token}`)
+                .send({ title: longTitle });
+
+            expect(res.status).toBe(400);
+            expect(res.body.message).toBe("Validation failed");
+        });
+
+        it("returns 400 when description exceeds 2000 characters", async () => {
+            const { token } = await registerAndLogin();
+            const longDesc = "a".repeat(2001);
+
+            const res = await request(app)
+                .post("/api/tasks")
+                .set("Authorization", `Bearer ${token}`)
+                .send({ title: "Valid Title", description: longDesc });
+
+            expect(res.status).toBe(400);
+            expect(res.body.message).toBe("Validation failed");
+        });
+
+        it("returns 400 when any tag exceeds 30 characters", async () => {
+            const { token } = await registerAndLogin();
+            const longTag = "a".repeat(31);
+
+            const res = await request(app)
+                .post("/api/tasks")
+                .set("Authorization", `Bearer ${token}`)
+                .send({ title: "Valid Title", tags: ["normal", longTag] });
+
+            expect(res.status).toBe(400);
+            expect(res.body.message).toBe("Validation failed");
+        });
+
+        it("returns 400 when tags array exceeds 30 items", async () => {
+            const { token } = await registerAndLogin();
+            const manyTags = Array(31).fill("tag");
+
+            const res = await request(app)
+                .post("/api/tasks")
+                .set("Authorization", `Bearer ${token}`)
+                .send({ title: "Valid Title", tags: manyTags });
+
+            expect(res.status).toBe(400);
+            expect(res.body.message).toBe("Validation failed");
+        });
     });
 
     // ─── Auth middleware ──────────────────────────────────────────────────────

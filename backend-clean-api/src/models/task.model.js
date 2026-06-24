@@ -5,11 +5,13 @@ const taskSchema = new mongoose.Schema(
         title: {
             type: String,
             required: true,
-            trim: true
+            trim: true,
+            maxlength: 100
         },
 
         description: {
-            type: String
+            type: String,
+            maxlength: 2000
         },
 
         dueDate: {
@@ -23,7 +25,20 @@ const taskSchema = new mongoose.Schema(
         },
 
         tags: {
-            type: [String],
+            type: [
+                {
+                    type: String,
+                    maxlength: 30
+                }
+            ],
+            validate: [
+                {
+                    validator: function (val) {
+                        return val.length <= 30;
+                    },
+                    message: "Tags array cannot exceed 30 items"
+                }
+            ],
             default: []
         },
 
