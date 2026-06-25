@@ -75,14 +75,30 @@ describe("Admin & RBAC API", () => {
             expect(res.body.message).toMatch(/Forbidden/i);
         });
 
-        it("allows admin user to access admin route and get all users", async () => {
+        it("allows admin user to access admin route and get all users (paginated)", async () => {
             const res = await request(app)
                 .get("/api/admin/users")
                 .set("Authorization", `Bearer ${adminToken}`);
 
             expect(res.status).toBe(200);
-            expect(res.body.length).toBeGreaterThanOrEqual(2);
-            expect(res.body[0]).not.toHaveProperty("password");
+            expect(res.body).toHaveProperty("items");
+            expect(res.body).toHaveProperty("pagination");
+            expect(res.body.items.length).toBeGreaterThanOrEqual(2);
+            expect(res.body.items[0]).not.toHaveProperty("password");
+            expect(res.body.pagination.total).toBeGreaterThanOrEqual(2);
+            expect(res.body.pagination.page).toBe(1);
+            expect(res.body.pagination.limit).toBe(10);
+        });
+
+        it("supports custom page and limit query parameters", async () => {
+            const res = await request(app)
+                .get("/api/admin/users?page=2&limit=1")
+                .set("Authorization", `Bearer ${adminToken}`);
+
+            expect(res.status).toBe(200);
+            expect(res.body.items.length).toBe(1);
+            expect(res.body.pagination.page).toBe(2);
+            expect(res.body.pagination.limit).toBe(1);
         });
 
         it("allows admin to update user role", async () => {

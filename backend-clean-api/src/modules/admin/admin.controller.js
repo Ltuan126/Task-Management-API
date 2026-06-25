@@ -3,9 +3,30 @@ const User = require("../../models/user.model");
 class AdminController {
     async getAllUsers(req, res, next) {
         try {
-            // Find all users except selecting password
-            const users = await User.find({}).select("-password").sort({ createdAt: -1 });
-            return res.json(users);
+            const { page = 1, limit = 10 } = req.query;
+
+            const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+            const limitNum = Math.max(Math.min(parseInt(limit, 10) || 10, 100), 1);
+            const skip = (pageNum - 1) * limitNum;
+
+            const [users, total] = await Promise.all([
+                User.find({})
+                    .select("-password")
+                    .sort({ createdAt: -1 })
+                    .skip(skip)
+                    .limit(limitNum),
+                User.countDocuments({}),
+            ]);
+
+            return res.json({
+                items: users,
+                pagination: {
+                    total,
+                    page: pageNum,
+                    limit: limitNum,
+                    totalPages: Math.ceil(total / limitNum) || 1,
+                },
+            });
         } catch (error) {
             return next(error);
         }
