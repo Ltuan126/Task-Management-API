@@ -1,6 +1,35 @@
 import { useEffect, useRef } from "react";
-import { Chart } from "chart.js/auto";
+import {
+  Chart,
+  ArcElement,
+  BarElement,
+  BarController,
+  LineElement,
+  LineController,
+  DoughnutController,
+  PointElement,
+  CategoryScale,
+  LinearScale,
+  Filler,
+  Legend,
+  Tooltip,
+} from "chart.js";
 import type { AnalyticsData } from "../hooks/useAnalytics";
+
+Chart.register(
+  ArcElement,
+  BarElement,
+  BarController,
+  LineElement,
+  LineController,
+  DoughnutController,
+  PointElement,
+  CategoryScale,
+  LinearScale,
+  Filler,
+  Legend,
+  Tooltip,
+);
 
 interface Props {
   data: AnalyticsData;
