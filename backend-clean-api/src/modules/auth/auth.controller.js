@@ -45,6 +45,67 @@ class AuthController {
             return next(error);
         }
     }
+
+    async refresh(req, res, next) {
+        try {
+            const { refreshToken } = req.body;
+            const result = await authService.refresh(refreshToken);
+            return res.json(result);
+        } catch (error) {
+            return next(error);
+        }
+    }
+
+    async logout(req, res, next) {
+        try {
+            const { refreshToken } = req.body;
+            await authService.logout(refreshToken);
+
+            auditService.log({
+                userId: req.user.id,
+                email: req.user.email,
+                action: "USER_LOGGED_OUT",
+                ipAddress: req.ip,
+            });
+
+            return res.json({ message: "Logged out successfully" });
+        } catch (error) {
+            return next(error);
+        }
+    }
+
+    async forgotPassword(req, res, next) {
+        try {
+            const { email } = req.body;
+            const result = await authService.forgotPassword(email);
+
+            auditService.log({
+                email,
+                action: "PASSWORD_RESET_REQUESTED",
+                ipAddress: req.ip,
+            });
+
+            return res.json(result);
+        } catch (error) {
+            return next(error);
+        }
+    }
+
+    async resetPassword(req, res, next) {
+        try {
+            const { token, newPassword } = req.body;
+            const result = await authService.resetPassword(token, newPassword);
+
+            auditService.log({
+                action: "PASSWORD_RESET_COMPLETED",
+                ipAddress: req.ip,
+            });
+
+            return res.json(result);
+        } catch (error) {
+            return next(error);
+        }
+    }
 }
 
 module.exports = new AuthController();
