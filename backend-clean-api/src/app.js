@@ -94,11 +94,13 @@ const taskRoutes = require("./modules/tasks/task.route");
 const authRoutes = require("./modules/auth/auth.route");
 const adminRoutes = require("./modules/admin/admin.route");
 const auditRoutes = require("./modules/audit/audit.route");
+const userRoutes = require("./modules/users/user.route");
 
 app.use("/api/tasks", taskRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/audit", auditRoutes);
+app.use("/api/users", userRoutes);
 
 // ---------------------------------------------------------------------------
 // 404 handler for unmatched routes
