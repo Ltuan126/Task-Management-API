@@ -35,8 +35,16 @@ export function TaskList({
     <section className="panel">
       <h2>◈ Tasks ({totalTasks})</h2>
 
-      {errorMessage && <p className="banner error">{errorMessage}</p>}
-      {successMessage && <p className="banner success">{successMessage}</p>}
+      {errorMessage && (
+        <p className="banner error" role="alert" aria-live="assertive">
+          {errorMessage}
+        </p>
+      )}
+      {successMessage && (
+        <p className="banner success" role="status" aria-live="polite">
+          {successMessage}
+        </p>
+      )}
 
       {loadingTasks ? (
         <p className="muted">Loading tasks...</p>

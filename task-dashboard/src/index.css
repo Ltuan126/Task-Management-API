@@ -3,7 +3,9 @@
    Inspired by: Linear, Vercel, Craft
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;0,14..32,900;1,14..32,400&display=swap');
+/* Inter is loaded once via <link> in index.html (preconnected,
+   non-render-blocking). Do not re-import it here — a duplicate
+   @import would fetch the same font family a second time. */
 
 /* ─── Design tokens ──────────────────────────────────────── */
 :root {
@@ -61,6 +63,38 @@
 ::selection {
   background: rgba(26, 92, 71, 0.18);
   color: var(--ink);
+}
+
+/* ─── Focus indicators (keyboard navigation only) ───────────
+   :focus-visible keeps mouse/touch interactions free of a ring
+   while giving keyboard users a clear, high-contrast indicator. */
+:focus-visible {
+  outline: 2.5px solid var(--forest-mid);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+input:focus-visible, select:focus-visible {
+  outline: 2.5px solid var(--forest-mid);
+  outline-offset: 1px;
+}
+
+button:focus-visible {
+  outline: 2.5px solid var(--forest-mid);
+  outline-offset: 3px;
+}
+
+/* ─── Reduced motion ─────────────────────────────────────────
+   Respect the OS-level "reduce motion" preference by collapsing
+   animations/transitions to near-instant instead of removing
+   the underlying state changes. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ─── Scrollbar ──────────────────────────────────────────── */
