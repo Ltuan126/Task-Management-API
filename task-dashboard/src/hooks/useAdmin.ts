@@ -1,17 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { apiPath, authFetch, createHeaders } from "../lib/api";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { apiPath } from "../lib/api";
+import type { AuthCallbacks } from "../lib/api";
 import type { AdminUser, AuditLogEntry, Paginated, Role } from "../types";
+import { useAuthRequest } from "./useAuthRequest";
 import { useDebounce } from "./useDebounce";
 
 const USERS_PAGE_SIZE = 8;
 const LOGS_PAGE_SIZE = 10;
-
-type AuthCallbacks = {
-  getAccessToken: () => string;
-  getRefreshToken: () => string;
-  onTokensRefreshed: (accessToken: string, refreshToken: string) => void;
-  onRefreshFailed: () => void;
-};
 
 /**
  * Data layer for the admin console: user directory + role management and the
@@ -20,22 +15,7 @@ type AuthCallbacks = {
  * is not the access control itself.
  */
 export function useAdmin(token: string, enabled: boolean, callbacks: AuthCallbacks) {
-  // Keep the latest callbacks in a ref so fetch effects don't re-run whenever
-  // the caller re-renders and passes a new object literal.
-  const callbacksRef = useRef(callbacks);
-  useEffect(() => {
-    callbacksRef.current = callbacks;
-  });
-
-  const request = useCallback(
-    (url: string, options: RequestInit = {}) =>
-      authFetch(
-        url,
-        { ...options, headers: createHeaders(callbacksRef.current.getAccessToken()) },
-        callbacksRef.current
-      ),
-    []
-  );
+  const request = useAuthRequest(callbacks);
 
   // Requests are only worth making for an authenticated admin.
   const active = Boolean(token) && enabled;

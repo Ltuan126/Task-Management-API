@@ -36,6 +36,14 @@ export const REFRESH_TOKEN_KEY = "task_dashboard_refresh_token";
 // Authenticated fetch with automatic token refresh on 401
 // ---------------------------------------------------------------------------
 
+/** The token plumbing `authFetch` needs; `useAuth` supplies all four. */
+export type AuthCallbacks = {
+  getAccessToken: () => string;
+  getRefreshToken: () => string;
+  onTokensRefreshed: (accessToken: string, refreshToken: string) => void;
+  onRefreshFailed: () => void;
+};
+
 /**
  * A fetch wrapper that automatically attempts to refresh the access token
  * when a 401 response is received. If the refresh succeeds, the original
@@ -48,12 +56,7 @@ export const REFRESH_TOKEN_KEY = "task_dashboard_refresh_token";
 export async function authFetch(
   url: string,
   options: RequestInit,
-  callbacks: {
-    getAccessToken: () => string;
-    getRefreshToken: () => string;
-    onTokensRefreshed: (accessToken: string, refreshToken: string) => void;
-    onRefreshFailed: () => void;
-  }
+  callbacks: AuthCallbacks
 ): Promise<Response> {
   // First attempt
   let response = await fetch(url, options);
