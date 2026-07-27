@@ -18,7 +18,12 @@ export function useAuth() {
         typeof parsed.name === "string" &&
         typeof parsed.email === "string"
       ) {
-        return parsed as User;
+        // Sessions persisted before roles existed have no `role` field, and an
+        // unrecognised value must never be treated as elevated access.
+        return {
+          ...parsed,
+          role: parsed.role === "admin" ? "admin" : "user",
+        } as User;
       }
       localStorage.removeItem(USER_KEY);
       return null;

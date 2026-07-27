@@ -4,7 +4,11 @@ const DEFAULT_API_BASE_URL = "https://task-management-api-71ba.onrender.com";
 
 const normalizeApiBaseUrl = (value?: string): string => {
   if (!value?.trim()) {
-    return DEFAULT_API_BASE_URL;
+    // `.env.development` intentionally leaves this empty so requests stay
+    // relative and go through the Vite dev proxy (see vite.config.ts), which
+    // forwards /api to the local backend. Falling back to the production URL
+    // here would silently point `npm run dev` at live data.
+    return import.meta.env.DEV ? "" : DEFAULT_API_BASE_URL;
   }
 
   try {

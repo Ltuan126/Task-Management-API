@@ -16,7 +16,9 @@ A full-stack task management workspace with:
 - Ownership isolation: users can only access their own tasks
 - User profile module (`/api/users`)
 - Admin API with query-based pagination (`/api/admin/users`) and role management
-- Audit logging (`/api/audit`) for admin-visible activity history
+- Audit logging (`/api/audit`) for admin-visible activity history, covering auth
+  events, task CRUD, and privileged role changes (`USER_ROLE_CHANGED` records the
+  actor and the before/after roles)
 - Task metadata supported: `dueDate`, `priority`, `tags` (with schema-level `maxlength` validation)
 - Task list features:
   - Pagination (`page`, `limit`)
@@ -26,14 +28,21 @@ A full-stack task management workspace with:
 - Task stats & analytics endpoints (`/api/tasks/stats`, `/api/tasks/analytics`)
 - Graceful startup (DB connects before the HTTP server listens) and graceful shutdown on `SIGINT`/`SIGTERM`
 - Swagger docs covering all endpoint groups (tasks, auth, admin, audit, users)
-- Integration tests: 80 tests across 9 suites (auth, refresh tokens, password reset, user profile, task CRUD/ownership, admin, audit, analytics)
+- Integration tests: 82 tests across 9 suites (auth, refresh tokens, password reset, user profile, task CRUD/ownership, admin, audit, analytics)
 
 ### Frontend (`task-dashboard`)
 
 - React + Vite + TypeScript demo dashboard, `strict: true` TypeScript with zero compiler errors
-- Register/login flow with refresh-token handling baked into the dashboard session
+- Register/login/logout flow with refresh-token rotation. Note: the transparent
+  401-retry (`authFetch`) is currently wired into the admin console only — the
+  task and analytics hooks still use plain `fetch`, so an expired access token
+  logs the user out there instead of refreshing silently.
 - Task list with filters, sorting, search, and pagination
 - Create, inline-edit, update status, and delete tasks
+- Admin console (admins only): user directory with pagination and inline role
+  management, plus a filterable audit trail (by action and email). Server-side
+  RBAC remains the real gate — a tampered client role renders an empty shell and
+  the API returns 403.
 - Analytics panel with tree-shaken Chart.js imports (explicit element registration only)
 - `ErrorBoundary` component so a single render failure doesn't blank the whole page
 - Accessibility: single font load (no duplicate Google Fonts import), visible `:focus-visible`
@@ -187,12 +196,22 @@ npm run build
 1. Register user A and create tasks.
 2. Use filters/search/sort in the dashboard.
 3. Login as user B and confirm user A tasks are not visible.
-4. Promote a user to `admin` and show `/api/admin/users` + `/api/audit`.
+4. Promote user B to `admin` (see below), sign in as them, and use the admin
+   console: change a role and watch the `USER_ROLE_CHANGED` entry appear in the
+   audit trail with the actor and the before/after roles.
 5. Show Swagger or the CI run for technical validation.
+
+The first admin has to be promoted directly in the database, since the endpoint
+that grants roles is itself admin-only:
+
+```bash
+mongosh taskdb --eval 'db.users.updateOne({email:"you@example.com"},{$set:{role:"admin"}})'
+```
 
 ## Next Improvements
 
-- Dashboard admin UI (surface role management and audit logs in the frontend, not just via API)
+- Wire `authFetch` into `useTasks`/`useAnalytics` so expired access tokens refresh
+  transparently everywhere, not just in the admin console
 - E2E tests for the frontend (e.g. Playwright) alongside the existing backend integration tests
 - Rate-limit and lockout policy tuning for auth endpoints under brute-force load
 - Real staging environment smoke test after each CD deploy

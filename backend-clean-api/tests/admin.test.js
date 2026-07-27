@@ -8,6 +8,7 @@ process.env.NODE_ENV = "test";
 const app = require("../src/app");
 const User = require("../src/models/user.model");
 const Task = require("../src/models/task.model");
+const AuditLog = require("../src/models/audit-log.model");
 
 describe("Admin & RBAC API", () => {
     let mongoServer;
@@ -121,6 +122,47 @@ describe("Admin & RBAC API", () => {
                 .send({ role: "super-admin" });
 
             expect(res.status).toBe(400);
+        });
+
+        it("returns 404 when updating the role of a non-existent user", async () => {
+            const missingId = new mongoose.Types.ObjectId().toString();
+
+            const res = await request(app)
+                .patch(`/api/admin/users/${missingId}/role`)
+                .set("Authorization", `Bearer ${adminToken}`)
+                .send({ role: "admin" });
+
+            expect(res.status).toBe(404);
+        });
+
+        it("writes a USER_ROLE_CHANGED audit entry recording the role transition", async () => {
+            await AuditLog.deleteMany({ action: "USER_ROLE_CHANGED" });
+
+            const res = await request(app)
+                .patch(`/api/admin/users/${normalUserId}/role`)
+                .set("Authorization", `Bearer ${adminToken}`)
+                .send({ role: "admin" });
+
+            expect(res.status).toBe(200);
+
+            // Audit writes are fire-and-forget, so poll briefly for the entry.
+            let entry = null;
+            for (let attempt = 0; attempt < 20 && !entry; attempt += 1) {
+                entry = await AuditLog.findOne({ action: "USER_ROLE_CHANGED" });
+                if (!entry) await new Promise((resolve) => setTimeout(resolve, 25));
+            }
+
+            expect(entry).not.toBeNull();
+            // The actor is the admin who performed the change...
+            expect(entry.email).toBe("admin@example.com");
+            // ...and the details capture who was changed, and from/to what.
+            expect(entry.details.targetUserId).toBe(normalUserId);
+            expect(entry.details.targetEmail).toBe("normal@example.com");
+            expect(entry.details.from).toBe("user");
+            expect(entry.details.to).toBe("admin");
+
+            // Revert role
+            await User.findByIdAndUpdate(normalUserId, { role: "user" });
         });
     });
 

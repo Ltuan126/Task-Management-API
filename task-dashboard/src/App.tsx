@@ -2,7 +2,9 @@ import { useEffect } from "react";
 import { useAuth } from "./hooks/useAuth";
 import { useTasks } from "./hooks/useTasks";
 import { useAnalytics } from "./hooks/useAnalytics";
+import { useAdmin } from "./hooks/useAdmin";
 import { AuthPage } from "./components/AuthPage";
+import { AdminPanel } from "./components/AdminPanel";
 import { TopBar } from "./components/TopBar";
 import { HeroPanel } from "./components/HeroPanel";
 import { CreateTaskForm } from "./components/CreateTaskForm";
@@ -14,6 +16,16 @@ function App() {
   const auth = useAuth();
   const tasks = useTasks(auth.token, auth.handleLogout);
   const analytics = useAnalytics(auth.token || "");
+
+  // Server-side RBAC is the real gate; this only decides whether to render the
+  // console and issue its requests.
+  const isAdmin = auth.user?.role === "admin";
+  const admin = useAdmin(auth.token, isAdmin, {
+    getAccessToken: auth.getAccessToken,
+    getRefreshToken: auth.getRefreshToken,
+    onTokensRefreshed: auth.onTokensRefreshed,
+    onRefreshFailed: auth.handleLogout,
+  });
 
   // Auto-refresh analytics when tasks stats change
   useEffect(() => {
@@ -82,6 +94,33 @@ function App() {
         loading={analytics.loading}
         onRefresh={analytics.refreshAnalytics}
       />
+
+      {isAdmin && (
+        <AdminPanel
+          currentUserId={auth.user.id}
+          users={admin.users}
+          usersTotal={admin.usersTotal}
+          usersPage={admin.usersPage}
+          usersTotalPages={admin.usersTotalPages}
+          setUsersPage={admin.setUsersPage}
+          loadingUsers={admin.loadingUsers}
+          savingUserId={admin.savingUserId}
+          adminCount={admin.adminCount}
+          onRoleChange={admin.handleRoleChange}
+          logs={admin.logs}
+          logsTotal={admin.logsTotal}
+          logsPage={admin.logsPage}
+          logsTotalPages={admin.logsTotalPages}
+          setLogsPage={admin.setLogsPage}
+          loadingLogs={admin.loadingLogs}
+          actionFilter={admin.actionFilter}
+          setActionFilter={admin.setActionFilter}
+          emailFilter={admin.emailFilter}
+          setEmailFilter={admin.setEmailFilter}
+          errorMessage={admin.errorMessage}
+          successMessage={admin.successMessage}
+        />
+      )}
     </main>
   );
 }
