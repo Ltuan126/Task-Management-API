@@ -14,18 +14,24 @@ import { AnalyticsPanel } from "./components/AnalyticsPanel";
 
 function App() {
   const auth = useAuth();
-  const tasks = useTasks(auth.token, auth.handleLogout);
-  const analytics = useAnalytics(auth.token || "");
 
-  // Server-side RBAC is the real gate; this only decides whether to render the
-  // console and issue its requests.
-  const isAdmin = auth.user?.role === "admin";
-  const admin = useAdmin(auth.token, isAdmin, {
+  // Every data hook refreshes an expired access token through the same
+  // plumbing; the hooks stash this in a ref, so a new literal per render is
+  // fine and does not re-trigger their fetch effects.
+  const authCallbacks = {
     getAccessToken: auth.getAccessToken,
     getRefreshToken: auth.getRefreshToken,
     onTokensRefreshed: auth.onTokensRefreshed,
     onRefreshFailed: auth.handleLogout,
-  });
+  };
+
+  const tasks = useTasks(auth.token, authCallbacks);
+  const analytics = useAnalytics(auth.token, authCallbacks);
+
+  // Server-side RBAC is the real gate; this only decides whether to render the
+  // console and issue its requests.
+  const isAdmin = auth.user?.role === "admin";
+  const admin = useAdmin(auth.token, isAdmin, authCallbacks);
 
   // Auto-refresh analytics when tasks stats change
   useEffect(() => {
