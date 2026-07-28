@@ -33,10 +33,10 @@ A full-stack task management workspace with:
 ### Frontend (`task-dashboard`)
 
 - React + Vite + TypeScript demo dashboard, `strict: true` TypeScript with zero compiler errors
-- Register/login/logout flow with refresh-token rotation. Note: the transparent
-  401-retry (`authFetch`) is currently wired into the admin console only — the
-  task and analytics hooks still use plain `fetch`, so an expired access token
-  logs the user out there instead of refreshing silently.
+- Register/login/logout flow with refresh-token rotation. Every data hook
+  (tasks, analytics, admin) issues its requests through `authFetch` via the
+  shared `useAuthRequest` hook, so an expired access token is refreshed and the
+  request retried transparently instead of bouncing the user to the login screen.
 - Task list with filters, sorting, search, and pagination
 - Create, inline-edit, update status, and delete tasks
 - Admin console (admins only): user directory with pagination and inline role
@@ -48,12 +48,17 @@ A full-stack task management workspace with:
 - Accessibility: single font load (no duplicate Google Fonts import), visible `:focus-visible`
   indicators for keyboard navigation, `aria-live` status/error banners, and
   `prefers-reduced-motion` support
+- Unit tests: 31 tests across 5 suites (Vitest + Testing Library, jsdom), covering the
+  `authFetch` refresh-and-retry path, the data hooks, and the stored-session parsing in
+  `useAuth` (including the rule that a tampered `role` in localStorage never yields admin)
 
 ### CI/CD
 
 - GitHub Actions workflow at `.github/workflows/ci.yml`
-- Runs backend tests on push/PR to `main` and `develop`
-- Auto-deploys to Render: `main` -> production, `develop` -> staging (via deploy hooks)
+- Runs backend tests and the frontend job (lint + `tsc -b` + `vite build` + Vitest) on
+  push/PR to `main` and `develop`
+- Auto-deploys to Render: `main` -> production, `develop` -> staging (via deploy hooks).
+  Both deploy jobs require the backend *and* frontend jobs to pass.
 
 ## Repository Structure
 
@@ -184,7 +189,14 @@ cd backend-clean-api
 npm test
 ```
 
-Type-check the frontend:
+Run frontend tests:
+
+```bash
+cd task-dashboard
+npm test
+```
+
+Type-check and build the frontend:
 
 ```bash
 cd task-dashboard
@@ -210,9 +222,10 @@ mongosh taskdb --eval 'db.users.updateOne({email:"you@example.com"},{$set:{role:
 
 ## Next Improvements
 
-- Wire `authFetch` into `useTasks`/`useAnalytics` so expired access tokens refresh
-  transparently everywhere, not just in the admin console
-- E2E tests for the frontend (e.g. Playwright) alongside the existing backend integration tests
+- E2E tests for the frontend (e.g. Playwright) — the Vitest suite covers hooks and
+  the fetch layer, but nothing yet drives the real UI end to end
+- Component-level tests for the dashboard's rendering layer (`TaskList`, `AdminPanel`,
+  `AnalyticsPanel`), which the current suite does not touch
 - Rate-limit and lockout policy tuning for auth endpoints under brute-force load
 - Real staging environment smoke test after each CD deploy
 

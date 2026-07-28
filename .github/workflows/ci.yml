@@ -5,11 +5,13 @@ on:
     branches: [main, develop]
     paths:
       - "backend-clean-api/**"
+      - "task-dashboard/**"
       - ".github/workflows/ci.yml"
   pull_request:
     branches: [main, develop]
     paths:
       - "backend-clean-api/**"
+      - "task-dashboard/**"
       - ".github/workflows/ci.yml"
   workflow_dispatch:
 
@@ -45,12 +47,57 @@ jobs:
         run: npm test
 
   # ──────────────────────────────────────────────────────────────
-  # Job 2: Deploy to Render PRODUCTION (main branch only)
+  # Job 2: Lint, typecheck, and test the dashboard (always)
+  # ──────────────────────────────────────────────────────────────
+  frontend:
+    name: Frontend (Node 22)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: task-dashboard
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          # Vite 8 requires ^20.19.0 || >=22.12.0 — 22 keeps a clear margin.
+          node-version: 22
+          cache: npm
+          cache-dependency-path: task-dashboard/package-lock.json
+
+      - name: Pin npm version
+        # `npm ci`'s lockfile-consistency check isn't stable across npm majors:
+        # npm 11 (used to regenerate package-lock.json) omits some optional
+        # peer-dependency entries that npm 10 requires, so whatever npm ships
+        # with the runner's Node build can fail `npm ci` on a lockfile that
+        # installs fine locally. Pin to the version the lockfile is
+        # maintained against so this can't drift silently.
+        run: npm install -g npm@10.9.8
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck and build
+        # `build` is `tsc -b && vite build`, so this covers both.
+        run: npm run build
+
+      - name: Run tests
+        run: npm test
+
+  # ──────────────────────────────────────────────────────────────
+  # Job 3: Deploy to Render PRODUCTION (main branch only)
   # Requires secret: RENDER_DEPLOY_HOOK_PROD
   # ──────────────────────────────────────────────────────────────
   deploy-production:
     name: Deploy → Production (Render)
-    needs: test
+    # One pipeline, one verdict — a red dashboard blocks the ship too.
+    needs: [test, frontend]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: production
@@ -73,12 +120,12 @@ jobs:
           fi
 
   # ──────────────────────────────────────────────────────────────
-  # Job 3: Deploy to Render STAGING (develop branch only)
+  # Job 4: Deploy to Render STAGING (develop branch only)
   # Requires secret: RENDER_DEPLOY_HOOK_STAGING
   # ──────────────────────────────────────────────────────────────
   deploy-staging:
     name: Deploy → Staging (Render)
-    needs: test
+    needs: [test, frontend]
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: staging
