@@ -33,10 +33,10 @@ A full-stack task management workspace with:
 ### Frontend (`task-dashboard`)
 
 - React + Vite + TypeScript demo dashboard, `strict: true` TypeScript with zero compiler errors
-- Register/login/logout flow with refresh-token rotation. Note: the transparent
-  401-retry (`authFetch`) is currently wired into the admin console only — the
-  task and analytics hooks still use plain `fetch`, so an expired access token
-  logs the user out there instead of refreshing silently.
+- Register/login/logout flow with refresh-token rotation. Every data hook
+  (tasks, analytics, admin) issues its requests through `authFetch` via the
+  shared `useAuthRequest` hook, so an expired access token is refreshed and the
+  request retried transparently instead of bouncing the user to the login screen.
 - Task list with filters, sorting, search, and pagination
 - Create, inline-edit, update status, and delete tasks
 - Admin console (admins only): user directory with pagination and inline role
@@ -210,8 +210,8 @@ mongosh taskdb --eval 'db.users.updateOne({email:"you@example.com"},{$set:{role:
 
 ## Next Improvements
 
-- Wire `authFetch` into `useTasks`/`useAnalytics` so expired access tokens refresh
-  transparently everywhere, not just in the admin console
+- Frontend test suite — the dashboard currently has no automated tests, and CI
+  only watches `backend-clean-api/**`, so no frontend change is checked by CI
 - E2E tests for the frontend (e.g. Playwright) alongside the existing backend integration tests
 - Rate-limit and lockout policy tuning for auth endpoints under brute-force load
 - Real staging environment smoke test after each CD deploy
