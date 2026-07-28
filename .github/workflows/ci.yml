@@ -68,6 +68,15 @@ jobs:
           cache: npm
           cache-dependency-path: task-dashboard/package-lock.json
 
+      - name: Pin npm version
+        # `npm ci`'s lockfile-consistency check isn't stable across npm majors:
+        # npm 11 (used to regenerate package-lock.json) omits some optional
+        # peer-dependency entries that npm 10 requires, so whatever npm ships
+        # with the runner's Node build can fail `npm ci` on a lockfile that
+        # installs fine locally. Pin to the version the lockfile is
+        # maintained against so this can't drift silently.
+        run: npm install -g npm@10.9.8
+
       - name: Install dependencies
         run: npm ci
 
